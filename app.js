@@ -163,30 +163,64 @@ function toggleSidebar() {
 }
 window.toggleSidebar = toggleSidebar;
 
-// Initialize Application
-window.addEventListener('DOMContentLoaded', () => {
-  loadData();
+// ── App bootstrap (called after auth is resolved) ────────────────────────
+// Separated from DOMContentLoaded so Firebase can control the timing.
+function startApp() {
+  loadData();        // Fast render from localStorage cache
   safeCreateIcons();
-  
-  // Bind mobile menu toggle events
-  const toggleBtn = document.getElementById('menu-toggle-btn');
-  const closeBtn = document.getElementById('sidebar-close-btn');
-  const overlay = document.getElementById('sidebar-overlay');
-  if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
-  if (closeBtn) closeBtn.addEventListener('click', toggleSidebar);
-  if (overlay) overlay.addEventListener('click', toggleSidebar);
-  
-  // Start ticks
   updateDashboardTickers();
   setInterval(updateDashboardTickers, 1000);
-  setInterval(updateEnergyLevel, 30000); // every 30s
-  
+  setInterval(updateEnergyLevel, 30000);
   renderTasks();
   renderHabits();
   updateStats();
-  
-  // Trigger initial UI setup
   updateEnergyLevel();
+}
+window.startApp = startApp;
+
+// ── DOM ready ─────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Bind mobile menu toggle — always, regardless of auth state
+  const toggleBtn = document.getElementById('menu-toggle-btn');
+  const closeBtn  = document.getElementById('sidebar-close-btn');
+  const overlay   = document.getElementById('sidebar-overlay');
+  if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+  if (closeBtn)  closeBtn.addEventListener('click',  toggleSidebar);
+  if (overlay)   overlay.addEventListener('click',   toggleSidebar);
+
+  safeCreateIcons(); // Render icons before auth resolves
+
+  // ── Decide startup mode ────────────────────────────────────────────────
+  if (typeof FIREBASE_CONFIGURED !== 'undefined' && FIREBASE_CONFIGURED && auth) {
+    const isLocalMode = localStorage.getItem('deadlineiq_local_mode') === '1';
+    if (isLocalMode) {
+      // User previously chose to stay on this device only
+      const badge      = document.getElementById('sync-status-badge');
+      const cloudBtn   = document.getElementById('switch-to-cloud-btn');
+      if (badge)    badge.style.display    = 'flex';
+      if (cloudBtn) cloudBtn.style.display = 'block';
+      if (typeof showSyncStatus === 'function') showSyncStatus('local');
+      startApp();
+    } else {
+      // Firebase configured — show login and listen for auth state
+      if (typeof showLoginScreen === 'function') showLoginScreen();
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          currentUser = user;
+          if (typeof hideLoginScreen === 'function') hideLoginScreen();
+          if (typeof updateUserUI   === 'function') updateUserUI(user);
+          startApp();            // Fast render from cache
+          initSync(user.uid);    // Then overwrite with live cloud data
+        }
+        // else: login overlay stays visible waiting for user to sign in
+      });
+    }
+  } else {
+    // Firebase not configured — pure local mode, skip login screen
+    if (typeof hideLoginScreen === 'function') hideLoginScreen();
+    if (typeof showSyncStatus  === 'function') showSyncStatus('local');
+    startApp();
+  }
 });
 
 // Load state from localStorage
@@ -233,12 +267,14 @@ function loadData() {
   }
 }
 
-// Save helpers
+// Save helpers — write to localStorage (instant) then sync to cloud (debounced)
 function saveTasks() {
   localStorage.setItem('deadlineiq_tasks', JSON.stringify(tasks));
+  if (typeof cloudSave === 'function') cloudSave();
 }
 function saveHabits() {
   localStorage.setItem('deadlineiq_habits', JSON.stringify(habits));
+  if (typeof cloudSave === 'function') cloudSave();
 }
 
 // Page Routing Controller

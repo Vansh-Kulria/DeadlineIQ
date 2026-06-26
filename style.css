@@ -1698,4 +1698,336 @@ header {
   .header-countdown, .header-energy {
     display: none !important; /* Hide badges on very small screens to make room for toggle and mic button */
   }
+
+  /* On tiny screens, hide sync label text, keep just the dot */
+  .sync-label { display: none; }
+  .sync-badge  { padding: 5px 7px; gap: 0; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   LOGIN OVERLAY
+   ════════════════════════════════════════════════════════════════════ */
+#login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--bg-primary);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+#login-overlay.active {
+  display: flex;
+}
+
+.login-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  animation: loginCardIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes loginCardIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── Login logo row ─────────────────────────────────────────────────── */
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-logo-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-teal));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+}
+
+.login-brand {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.login-brand span {
+  color: var(--accent-teal);
+}
+
+/* ── Text ───────────────────────────────────────────────────────────── */
+.login-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin: 0 0 8px 0;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Feature list ───────────────────────────────────────────────────── */
+.login-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.login-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.feature-icon {
+  font-size: 16px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ── Google sign-in button ──────────────────────────────────────────── */
+.btn-google-signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 20px;
+  background: #ffffff;
+  color: #333;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn-google-signin:hover:not(:disabled) {
+  background: #f8f8f8;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-google-signin:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ── Error message ─────────────────────────────────────────────────── */
+.login-error {
+  font-size: 12.5px;
+  color: var(--accent-rose);
+  text-align: center;
+  margin: -12px 0 -8px 0;
+  min-height: 16px;
+}
+
+/* ── Divider ────────────────────────────────────────────────────────── */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+/* ── Local-only button ─────────────────────────────────────────────── */
+.btn-local-only {
+  width: 100%;
+  padding: 11px 20px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-local-only:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.login-fine-print {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.6;
+  margin: -12px 0 0 0;
+}
+
+/* ── Mobile login card ──────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px 20px;
+    gap: 18px;
+    border-radius: 16px;
+  }
+  .login-brand { font-size: 22px; }
+  .login-title { font-size: 18px; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   SYNC STATUS BADGE (header)
+   ════════════════════════════════════════════════════════════════════ */
+.sync-badge {
+  display: none; /* Shown after auth resolves */
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.01);
+  white-space: nowrap;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.sync-badge.flash {
+  background: rgba(16, 185, 129, 0.06);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.15);
+}
+
+/* Animated status dots */
+.sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background var(--transition-fast);
+}
+
+.sync-dot.synced  { background: #10b981; }
+.sync-dot.syncing { background: #f59e0b; animation: syncPulse 0.7s ease-in-out infinite alternate; }
+.sync-dot.offline { background: #f43f5e; }
+.sync-dot.local   { background: var(--text-muted); }
+
+@keyframes syncPulse {
+  from { opacity: 0.4; transform: scale(0.9); }
+  to   { opacity: 1;   transform: scale(1.3); }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   USER PROFILE PILL (header)
+   ════════════════════════════════════════════════════════════════════ */
+.user-profile {
+  display: none; /* Shown after sign-in */
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.01);
+  transition: all var(--transition-fast);
+}
+
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.user-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.signout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.signout-btn:hover {
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.08);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   SIDEBAR: Enable Cloud Sync button (local-only mode)
+   ════════════════════════════════════════════════════════════════════ */
+.btn-switch-cloud {
+  display: none; /* Shown only in local mode */
+  width: 100%;
+  margin-top: 10px;
+  padding: 7px 12px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  color: var(--accent-purple);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-switch-cloud:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
 }
