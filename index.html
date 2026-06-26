@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeadlineIQ - AI-Powered Last-Minute Companion</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Background Decorative Glowing Blurs -->
+  <div class="bg-glows">
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+  </div>
+
+  <!-- Sidebar Navigation -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon">
+        <i data-lucide="zap" style="color: #ffffff; width: 22px; height: 22px;"></i>
+      </div>
+      <div class="logo-text">Deadline<span>IQ</span></div>
+      <button id="sidebar-close-btn" class="btn btn-secondary btn-icon" style="display: none; margin-left: auto; width: 28px; height: 28px;" title="Close Menu">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    
+    <ul class="nav-links">
+      <li class="nav-item active" data-page="dashboard">
+        <a onclick="showPage('dashboard')">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item" data-page="tasks">
+        <a onclick="showPage('tasks')">
+          <i data-lucide="check-square"></i>
+          <span>Task Brain</span>
+        </a>
+      </li>
+      <li class="nav-item" data-page="calendar">
+        <a onclick="showPage('calendar')">
+          <i data-lucide="calendar"></i>
+          <span>Calendar</span>
+        </a>
+      </li>
+      <li class="nav-item" data-page="focus">
+        <a onclick="showPage('focus')">
+          <i data-lucide="target"></i>
+          <span>Focus Arena</span>
+        </a>
+      </li>
+      <li class="nav-item" data-page="habits">
+        <a onclick="showPage('habits')">
+          <i data-lucide="flame"></i>
+          <span>Habits & Goals</span>
+        </a>
+      </li>
+      <li class="nav-item" data-page="agent">
+        <a onclick="showPage('agent')">
+          <i data-lucide="cpu"></i>
+          <span>AI Agent</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div>AI Companion: Active</div>
+      <div style="font-size: 11px; color: var(--accent-teal);">System status: Optimal</div>
+    </div>
+  </aside>
+
+  <!-- Main View Container -->
+  <main id="main-content">
+    
+    <!-- Top Header -->
+    <header>
+      <div class="header-left" style="display: flex; align-items: center; gap: 12px;">
+        <button id="menu-toggle-btn" class="btn btn-secondary btn-icon" style="display: none; width: 32px; height: 32px;" title="Toggle Menu">
+          <i data-lucide="menu"></i>
+        </button>
+        <h1 id="page-title-display">Dashboard</h1>
+      </div>
+      
+      <div class="header-right">
+        <!-- Closest Deadline Countdown Ticker -->
+        <div class="header-countdown" id="closest-deadline-ticker">
+          <i data-lucide="clock"></i>
+          <span id="countdown-text">No pending deadlines</span>
+        </div>
+        
+        <!-- Energy/Productivity State Badge -->
+        <div class="header-energy" id="energy-badge">
+          <i data-lucide="battery-charging"></i>
+          <span>Focus energy: 85%</span>
+        </div>
+
+        <!-- Voice Commander HUD -->
+        <div class="voice-hud">
+          <input type="text" class="voice-input-box" id="voice-cmd-input" placeholder="Type command or click mic...">
+          <button class="mic-btn" id="voice-mic-btn" title="Speak to DeadlineIQ">
+            <i data-lucide="mic"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGE: Dashboard -->
+    <section id="dashboard-page" class="page-container active">
+      <div class="dashboard-grid">
+        
+        <!-- Left Side Dashboard -->
+        <div class="dashboard-left">
+          <!-- Status Info Cards -->
+          <div class="status-row">
+            <div class="status-card glass-panel">
+              <div class="status-icon status-purple">
+                <i data-lucide="shield-check"></i>
+              </div>
+              <div class="status-info">
+                <h3 id="stat-saved-count">0</h3>
+                <p>Saved Tasks</p>
+              </div>
+            </div>
+            <div class="status-card glass-panel">
+              <div class="status-icon status-teal">
+                <i data-lucide="flame"></i>
+              </div>
+              <div class="status-info">
+                <h3 id="stat-habit-streak">0d</h3>
+                <p>Habit Streak</p>
+              </div>
+            </div>
+            <div class="status-card glass-panel">
+              <div class="status-icon status-rose">
+                <i data-lucide="alert-circle"></i>
+              </div>
+              <div class="status-info">
+                <h3 id="stat-urgent-count">0</h3>
+                <p>Urgent Deadlines</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section title & run priority optimizer -->
+          <div class="section-title-row">
+            <h2><i data-lucide="sparkles" style="color: var(--accent-purple);"></i> AI Focus Planner Recommendations</h2>
+            <button class="btn btn-primary" onclick="runAIPrioritization()">
+              <i data-lucide="zap"></i> Optimize Priority
+            </button>
+          </div>
+
+          <!-- AI Recommendation Box -->
+          <div class="glass-panel ai-insights-box" id="ai-insights-container">
+            <div class="ai-insight-item">
+              <i data-lucide="info"></i>
+              <p>Welcome to <span>DeadlineIQ</span>. Add your upcoming commitments, work assignments, or tasks, then click <b>Optimize Priority</b> to let the AI calculate your personalized Rescue Schedule.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side Dashboard -->
+        <div class="dashboard-right">
+          <!-- Productivity Gauge -->
+          <div class="glass-panel" style="text-align: center;">
+            <h3 style="font-size: 16px; margin-bottom: 20px; font-weight: 600; color: var(--text-secondary);">Rescue Efficiency Score</h3>
+            <div class="productivity-score-ring">
+              <svg width="140" height="140">
+                <defs>
+                  <linearGradient id="cyanPurpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="var(--accent-teal)" />
+                    <stop offset="100%" stop-color="var(--accent-purple)" />
+                  </linearGradient>
+                </defs>
+                <circle class="ring-bg" cx="70" cy="70" r="60"></circle>
+                <circle class="ring-fill" id="efficiency-gauge-fill" cx="70" cy="70" r="60" stroke-dasharray="377" stroke-dashoffset="377"></circle>
+              </svg>
+              <div class="ring-text">
+                <div class="ring-number" id="efficiency-score-text">0%</div>
+                <div class="ring-label">Efficiency</div>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 15px;" id="efficiency-desc">Add and complete tasks on time to raise your rescue score.</p>
+          </div>
+
+          <!-- Nearest Deadlines Widget -->
+          <div class="glass-panel">
+            <h3 style="font-size: 16px; margin-bottom: 16px; font-weight: 600;">Nearest Deadlines</h3>
+            <div class="deadline-list" id="dashboard-deadline-list">
+              <!-- Dynamically populated -->
+              <p style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 20px 0;">No tasks scheduled yet</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PAGE: Tasks -->
+    <section id="tasks-page" class="page-container">
+      <div class="tasks-layout">
+        
+        <!-- Left Column: Manage Tasks -->
+        <div class="tasks-left">
+          <div class="section-title-row" style="margin-bottom: 12px;">
+            <h2>Task Repositories</h2>
+            <button class="btn btn-primary" onclick="openTaskModal()">
+              <i data-lucide="plus"></i> Add New Task
+            </button>
+          </div>
+
+          <!-- Filters & Views -->
+          <div class="task-filters">
+            <button class="filter-btn active" onclick="setTaskFilter('all', this)">All</button>
+            <button class="filter-btn" onclick="setTaskFilter('active', this)">Active</button>
+            <button class="filter-btn" onclick="setTaskFilter('completed', this)">Completed</button>
+            <button class="filter-btn" onclick="setTaskFilter('urgent', this)">Critical (<24h)</button>
+            <button class="filter-btn" onclick="toggleEisenhowerMatrix(this)"><i data-lucide="grid"></i> Eisenhower Grid</button>
+          </div>
+
+          <!-- Eisenhower Matrix Grid (Hidden by default) -->
+          <div class="eisenhower-matrix" id="eisenhower-grid" style="display: none;">
+            <div class="matrix-quadrant quad-do">
+              <div class="quad-header">
+                <span>Do (Urgent & Important)</span>
+                <span class="quad-count" id="count-quad-do">0</span>
+              </div>
+              <div class="quad-content" id="quad-content-do"></div>
+            </div>
+            <div class="matrix-quadrant quad-plan">
+              <div class="quad-header">
+                <span>Plan (Not Urgent & Important)</span>
+                <span class="quad-count" id="count-quad-plan">0</span>
+              </div>
+              <div class="quad-content" id="quad-content-plan"></div>
+            </div>
+            <div class="matrix-quadrant quad-delegate">
+              <div class="quad-header">
+                <span>Delegate (Urgent & Not Important)</span>
+                <span class="quad-count" id="count-quad-delegate">0</span>
+              </div>
+              <div class="quad-content" id="quad-content-delegate"></div>
+            </div>
+            <div class="matrix-quadrant quad-eliminate">
+              <div class="quad-header">
+                <span>Eliminate (Not Urgent & Not Important)</span>
+                <span class="quad-count" id="count-quad-eliminate">0</span>
+              </div>
+              <div class="quad-content" id="quad-content-eliminate"></div>
+            </div>
+          </div>
+
+          <!-- Main Task List Container -->
+          <div class="main-task-list" id="main-task-list">
+            <!-- Dynamically populated task cards -->
+          </div>
+        </div>
+
+        <!-- Right Column: AI Prioritizer Reasoning -->
+        <div class="tasks-right">
+          <div class="glass-panel" style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px;">
+            <h3 style="font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="brain" style="color: var(--accent-purple);"></i>
+              AI Prioritization Analytics
+            </h3>
+            <div id="ai-task-reasoning-body" style="font-size: 14px; line-height: 1.6; color: var(--text-secondary); flex-grow: 1; min-height: 0; overflow-y: auto;">
+              <p>The AI will evaluate task details like deadline proximity, energy intensity, and complexity to sort your queue. Add tasks to see diagnostic analytics.</p>
+            </div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                <span>Total Focus Complexity:</span>
+                <span id="ai-complexity-total" style="font-weight: 600; color: var(--text-primary);">0 / 25</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                <span>Recommended Next Block:</span>
+                <span id="ai-next-duration" style="font-weight: 600; color: var(--accent-teal);">None</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PAGE: Calendar -->
+    <section id="calendar-page" class="page-container">
+      <div class="glass-panel" style="padding: 30px;">
+        <div class="calendar-controls">
+          <div class="calendar-month-year" id="calendar-title">June 2026</div>
+          <div class="calendar-nav-btns">
+            <button class="btn btn-secondary btn-icon" onclick="changeMonth(-1)">
+              <i data-lucide="chevron-left"></i>
+            </button>
+            <button class="btn btn-secondary btn-icon" onclick="changeMonth(1)">
+              <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+        </div>
+        <div class="calendar-grid">
+          <div class="calendar-day-header">Sun</div>
+          <div class="calendar-day-header">Mon</div>
+          <div class="calendar-day-header">Tue</div>
+          <div class="calendar-day-header">Wed</div>
+          <div class="calendar-day-header">Thu</div>
+          <div class="calendar-day-header">Fri</div>
+          <div class="calendar-day-header">Sat</div>
+        </div>
+        <div class="calendar-days-container" id="calendar-grid-cells">
+          <!-- Calendar Days Renders dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE: Focus Arena -->
+    <section id="focus-page" class="page-container">
+      <div class="focus-layout">
+        
+        <!-- Timer Widget -->
+        <div class="timer-section glass-panel">
+          <div class="timer-circle-container work" id="timer-circle-container">
+            <svg viewBox="0 0 280 280" style="width: 100%; height: 100%;">
+              <circle class="timer-bg" cx="140" cy="140" r="130"></circle>
+              <circle class="timer-fill" id="timer-progress-fill" cx="140" cy="140" r="130"></circle>
+            </svg>
+            <div class="timer-text-container">
+              <div class="timer-time" id="timer-time-display">25:00</div>
+              <div class="timer-status" id="timer-status-display">DEEP FOCUS</div>
+            </div>
+          </div>
+
+          <div class="timer-controls">
+            <button class="btn btn-secondary btn-icon" id="timer-reset-btn" onclick="resetTimer()" title="Reset Timer">
+              <i data-lucide="rotate-ccw"></i>
+            </button>
+            <button class="btn btn-accent btn-icon" id="timer-toggle-btn" onclick="toggleTimer()" title="Start Focus Timer" style="width: 56px; height: 56px; border-radius: 50%;">
+              <i data-lucide="play" id="timer-play-icon" style="width: 24px; height: 24px;"></i>
+            </button>
+            <button class="btn btn-secondary btn-icon" id="timer-skip-btn" onclick="skipTimer()" title="Skip Session">
+              <i data-lucide="skip-forward"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Ambient Soundscapes -->
+        <div class="soundscape-section glass-panel">
+          <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Focus Sound Engine</h2>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+            Generates high-performance ambient soundscapes directly in your browser using synthesized audio nodes.
+          </p>
+
+          <div class="sound-card">
+            <div class="sound-info">
+              <button class="sound-icon-btn" onclick="toggleSound('binaural', this)">
+                <i data-lucide="waves"></i>
+              </button>
+              <div class="sound-meta">
+                <span class="sound-name">Binaural Waves</span>
+                <span class="sound-desc">10Hz alpha waves for focus</span>
+              </div>
+            </div>
+            <div class="sound-volume">
+              <i data-lucide="volume-1"></i>
+              <input type="range" class="slider" min="0" max="1" step="0.05" value="0.5" oninput="adjustVolume('binaural', this.value)">
+            </div>
+          </div>
+
+          <div class="sound-card">
+            <div class="sound-info">
+              <button class="sound-icon-btn" onclick="toggleSound('rain', this)">
+                <i data-lucide="cloud-rain"></i>
+              </button>
+              <div class="sound-meta">
+                <span class="sound-name">Rainstorm Ambient</span>
+                <span class="sound-desc">Simulated storm background noise</span>
+              </div>
+            </div>
+            <div class="sound-volume">
+              <i data-lucide="volume-1"></i>
+              <input type="range" class="slider" min="0" max="1" step="0.05" value="0.4" oninput="adjustVolume('rain', this.value)">
+            </div>
+          </div>
+
+          <div class="sound-card">
+            <div class="sound-info">
+              <button class="sound-icon-btn" onclick="toggleSound('noise', this)">
+                <i data-lucide="radio"></i>
+              </button>
+              <div class="sound-meta">
+                <span class="sound-name">Deep White Noise</span>
+                <span class="sound-desc">Constant noise for acoustic masking</span>
+              </div>
+            </div>
+            <div class="sound-volume">
+              <i data-lucide="volume-1"></i>
+              <input type="range" class="slider" min="0" max="1" step="0.05" value="0.3" oninput="adjustVolume('noise', this.value)">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PAGE: Habits -->
+    <section id="habits-page" class="page-container">
+      <div class="section-title-row">
+        <h2>Goal & Routine Streaks</h2>
+        <button class="btn btn-primary" onclick="openHabitModal()">
+          <i data-lucide="plus"></i> Add Habit
+        </button>
+      </div>
+      <div class="habits-grid" id="habits-list-container">
+        <!-- Habit Card Items Render Here -->
+      </div>
+    </section>
+
+    <!-- PAGE: AI Agent -->
+    <section id="agent-page" class="page-container">
+      <div class="agent-layout">
+        
+        <!-- Left: Deploy Control -->
+        <div class="agent-control-panel glass-panel">
+          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 10px;">Select Target Task</h3>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+            Select a task to deploy the DeadlineIQ Autonomous Agent. The agent will run a simulated execution breakdown, generate outlines or content, and save the schedule blocks.
+          </p>
+          <div class="agent-selector-list" id="agent-task-selector">
+            <!-- Dynamically populated with task items -->
+          </div>
+          <button class="btn btn-primary" id="btn-deploy-agent" onclick="deployAgentOnSelectedTask()" disabled>
+            <i data-lucide="play-circle"></i> Deploy Agent
+          </button>
+        </div>
+
+        <!-- Right: AI CLI Console -->
+        <div class="agent-console-panel">
+          <div class="console-header">
+            <div class="console-title">
+              <i data-lucide="terminal"></i>
+              <span>DEADLINE_IQ_AGENT://TERMINAL_CLI</span>
+            </div>
+            <div class="console-status">
+              <div class="status-dot" id="console-status-dot"></div>
+              <span id="console-status-text">OFFLINE</span>
+            </div>
+          </div>
+          <div class="console-body" id="console-terminal-body">
+            <div class="console-line info">> System ready. Select a task in the left panel to initialize.</div>
+            <div class="console-line"><span class="console-cursor"></span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL: Create Task -->
+  <div class="modal-overlay" id="task-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Create Task Rescue Target</h3>
+        <button class="close-btn" onclick="closeTaskModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="task-title-input">Task Title</label>
+          <input type="text" class="form-control" id="task-title-input" placeholder="e.g. Prep Presentation Slides">
+        </div>
+        <div class="form-group">
+          <label for="task-desc-input">Description / Details</label>
+          <textarea class="form-control" id="task-desc-input" rows="3" placeholder="e.g. Gather research data, draft slide structure, design theme..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-category-input">Category</label>
+            <select class="form-control" id="task-category-input">
+              <option value="work">Work Project</option>
+              <option value="study">Study / Assignment</option>
+              <option value="personal">Personal Routine</option>
+              <option value="finance">Finance / Bill</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="task-energy-input">Focus Energy Cost</label>
+            <select class="form-control" id="task-energy-input">
+              <option value="low">Low Energy (Routine)</option>
+              <option value="medium" selected>Medium Energy (Average)</option>
+              <option value="high">High Energy (Deep Focus)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-deadline-input">Deadline Date & Time</label>
+            <input type="datetime-local" class="form-control" id="task-deadline-input">
+          </div>
+          <div class="form-group">
+            <label for="task-complexity-input">Task Complexity (1-5)</label>
+            <input type="range" class="form-control" id="task-complexity-input" min="1" max="5" step="1" value="3">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeTaskModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitTaskModal()">Create Target</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Create Habit -->
+  <div class="modal-overlay" id="habit-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Track Habit / Routine</h3>
+        <button class="close-btn" onclick="closeHabitModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="habit-name-input">Habit Name</label>
+          <input type="text" class="form-control" id="habit-name-input" placeholder="e.g. Read Tech News, Meditate, Log Expenses...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeHabitModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitHabitModal()">Start Tracking</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AI Deliverable View -->
+  <div class="modal-overlay" id="deliverable-modal">
+    <div class="modal-content" style="width: 600px;">
+      <div class="modal-header">
+        <h3 id="deliverable-modal-title">AI Deliverable Output</h3>
+        <button class="close-btn" onclick="closeDeliverableModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <pre id="deliverable-modal-body" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 10px; overflow-y: auto; max-height: 300px; border: 1px solid var(--border-color); white-space: pre-wrap; color: var(--text-primary);"></pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="copyDeliverableToClipboard()">
+          <i data-lucide="copy"></i> Copy Content
+        </button>
+        <button class="btn btn-primary" onclick="closeDeliverableModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Speech Bubble AI Notification HUD -->
+  <div class="speech-bubble" id="ai-speech-hud">
+    <div class="speech-bubble-icon">
+      <i data-lucide="bot"></i>
+    </div>
+    <div class="speech-bubble-text" id="ai-speech-text">
+      "Hello! I am parsing your request."
+    </div>
+  </div>
+
+  <!-- Sidebar Mobile Overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+  <script src="pomodoro.js"></script>
+  <script src="voice.js"></script>
+  <script src="agent.js"></script>
+  <script src="calendar.js"></script>
+
+</body>
+</html>
