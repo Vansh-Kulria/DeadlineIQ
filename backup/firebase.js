@@ -15,12 +15,13 @@
 // ════════════════════════════════════════════════════════════════════════
 
 const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey:            "AIzaSyAJuZBTRp3_HyzPbl8uU18SrHVIrxI25iU",
+  authDomain:        "deadlineiq-dd5fb.firebaseapp.com",
+  projectId:         "deadlineiq-dd5fb",
+  storageBucket:     "deadlineiq-dd5fb.firebasestorage.app",
+  messagingSenderId: "1060427153929",
+  appId:             "1:1060427153929:web:b7c4924356a8e718502ed8",
+  measurementId:     "G-ZJ85HXC5MH"
 };
 
 // ── Feature gate ─────────────────────────────────────────────────────────
