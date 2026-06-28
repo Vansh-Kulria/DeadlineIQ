@@ -3038,7 +3038,7 @@ header {
   /* ── Header padding & spacing increase ── */
   header {
     height: 56px !important;
-    padding: 0 16px !important;
+    padding: 12px 20px !important;
     gap: 8px;
   }
 
@@ -3047,9 +3047,9 @@ header {
     letter-spacing: -0.2px;
   }
 
+  /* Hide hamburger on mobile — bottom nav handles navigation */
   #menu-toggle-btn {
-    width: 36px !important;
-    height: 36px !important;
+    display: none !important;
   }
 
   /* ── Main content: add space at bottom for bottom nav ── */
