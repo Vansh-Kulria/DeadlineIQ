@@ -27,7 +27,13 @@ export default function LoginOverlay() {
 
   return (
     <div id="login-overlay" className="active">
-      <div className="login-card">
+      {/* Decorative blurred background blobs */}
+      <div className="login-bg-glows" style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1, pointerEvents: 'none' }}>
+        <div className="login-glow-1" style={{ position: 'absolute', top: '10%', left: '15%', width: '400px', height: '400px', borderRadius: '50%', background: 'var(--accent-purple)', opacity: 0.15, filter: 'blur(120px)', animation: 'pulseGlow 8s infinite alternate' }}></div>
+        <div className="login-glow-2" style={{ position: 'absolute', bottom: '10%', right: '15%', width: '400px', height: '400px', borderRadius: '50%', background: 'var(--accent-teal)', opacity: 0.12, filter: 'blur(120px)', animation: 'pulseGlow 12s infinite alternate-reverse' }}></div>
+      </div>
+
+      <div className="login-card" style={{ position: 'relative', zIndex: 2 }}>
         {/* Logo */}
         <div className="login-logo">
           <div className="login-logo-icon">

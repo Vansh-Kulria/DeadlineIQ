@@ -380,6 +380,15 @@ export const AppProvider = ({ children }) => {
   // 1. Data Bootstrap
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
+    // One-time data reset migration as requested
+    const hasReset = localStorage.getItem('deadlineiq_data_reset_v1');
+    if (!hasReset) {
+      localStorage.removeItem('deadlineiq_tasks');
+      localStorage.removeItem('deadlineiq_habits');
+      localStorage.removeItem('deadlineiq_goals');
+      localStorage.setItem('deadlineiq_data_reset_v1', '1');
+    }
+
     // Load local cached values
     const savedTasks = localStorage.getItem('deadlineiq_tasks');
     const savedHabits = localStorage.getItem('deadlineiq_habits');
@@ -604,9 +613,30 @@ export const AppProvider = ({ children }) => {
     setSyncStatus('local');
   };
 
-  const switchToCloudModeHandler = () => {
+  const switchToCloudModeHandler = async () => {
+    if (!auth.currentUser) {
+      try {
+        await signInWithGoogle();
+      } catch (err) {
+        console.error('[DeadlineIQ] Direct cloud sign-in failed:', err);
+        return;
+      }
+    }
     localStorage.removeItem('deadlineiq_local_mode');
     setLocalMode(false);
+  };
+
+  const clearAllData = () => {
+    setTasks([]);
+    setHabits([]);
+    setGoals([]);
+    localStorage.setItem('deadlineiq_tasks', JSON.stringify([]));
+    localStorage.setItem('deadlineiq_habits', JSON.stringify([]));
+    localStorage.setItem('deadlineiq_goals', JSON.stringify([]));
+    if (auth.currentUser?.uid) {
+      triggerCloudSave([], [], [], auth.currentUser.uid, true);
+    }
+    speakRecommendation("All tasks, habits, and goals have been cleared.");
   };
 
   // Tasks actions
@@ -1418,7 +1448,7 @@ export const AppProvider = ({ children }) => {
       addGoal, deleteGoal, addMilestone, deleteMilestone, addMilestoneTask, deleteMilestoneTask, toggleGoalTask,
       toggleTimer, resetTimer, skipTimer,
       toggleSound, adjustVolume,
-      parseVoiceCommand, runAIPrioritization
+      parseVoiceCommand, runAIPrioritization, clearAllData
     }}>
       {children}
     </AppContext.Provider>

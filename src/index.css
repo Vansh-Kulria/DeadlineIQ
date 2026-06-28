@@ -1814,7 +1814,7 @@ header {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: var(--bg-primary);
+  background: radial-gradient(circle at 50% 50%, #161233 0%, #06050e 100%);
   display: none;
   align-items: center;
   justify-content: center;
@@ -1827,22 +1827,30 @@ header {
 }
 
 .login-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 40px 36px;
+  background: rgba(16, 17, 26, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 44px 38px;
   width: 100%;
   max-width: 430px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
-  animation: loginCardIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  gap: 24px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 100px rgba(139, 92, 246, 0.08);
+  animation: loginCardIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes loginCardIn {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0);    }
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1);    }
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(1) translate(0px, 0px); opacity: 0.12; }
+  50% { transform: scale(1.1) translate(20px, -20px); opacity: 0.18; }
+  100% { transform: scale(1) translate(0px, 0px); opacity: 0.12; }
 }
 
 /* ── Login logo row ─────────────────────────────────────────────────── */
@@ -1924,22 +1932,23 @@ header {
   justify-content: center;
   gap: 12px;
   width: 100%;
-  padding: 13px 20px;
+  padding: 14px 20px;
   background: #ffffff;
-  color: #333;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 12px;
-  font-size: 14.5px;
+  color: #111111;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0,0,0,0.1);
+  transition: all var(--transition-fast);
 }
 
 .btn-google-signin:hover:not(:disabled) {
-  background: #f8f8f8;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
+  background: #f1f3f4;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2), 0 0 12px rgba(139, 92, 246, 0.2);
+  transform: translateY(-1.5px);
 }
 
 .btn-google-signin:disabled {
@@ -1970,27 +1979,27 @@ header {
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--border-color);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* ── Local-only button ─────────────────────────────────────────────── */
 .btn-local-only {
   width: 100%;
-  padding: 11px 20px;
+  padding: 12px 20px;
   background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
   color: var(--text-secondary);
-  font-size: 13.5px;
+  font-size: 14px;
   font-family: inherit;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .btn-local-only:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .login-fine-print {
