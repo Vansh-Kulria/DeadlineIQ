@@ -872,6 +872,10 @@ export const AppProvider = ({ children }) => {
     updateHabitsAndSave(prev => [...prev, newHabit]);
   };
 
+  const deleteHabit = (id) => {
+    updateHabitsAndSave(prev => prev.filter(h => h.id !== id));
+  };
+
   const toggleHabitDay = (habitId, dateStr) => {
     updateHabitsAndSave(prev => prev.map(h => {
       if (h.id === habitId) {
@@ -1450,7 +1454,7 @@ export const AppProvider = ({ children }) => {
       speechBubbleText, speechBubbleActive, setSpeechBubbleActive,
       signInWithGoogle, signOutUser, useLocalMode: useLocalModeHandler, switchToCloudMode: switchToCloudModeHandler,
       addTask, deleteTask, toggleTask, toggleSubtask,
-      addHabit, toggleHabitDay,
+      addHabit, deleteHabit, toggleHabitDay,
       addGoal, deleteGoal, addMilestone, deleteMilestone, addMilestoneTask, deleteMilestoneTask, toggleGoalTask,
       toggleTimer, resetTimer, skipTimer,
       toggleSound, adjustVolume,

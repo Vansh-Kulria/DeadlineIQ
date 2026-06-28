@@ -2726,4 +2726,39 @@ header {
   width: 85px;
 }
 
+/* ── Habits View Upgrades ─────────────────────────────────────────── */
+.habit-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all var(--transition-fast);
+}
+
+.habit-delete-btn:hover {
+  color: var(--accent-rose);
+  background: rgba(244, 63, 94, 0.08);
+}
+
+.habit-day-dot.read-only {
+  cursor: default !important;
+}
+
+.habit-day-dot.today {
+  border-color: var(--accent-purple) !important;
+  box-shadow: 0 0 6px rgba(139, 92, 246, 0.2);
+}
+
+.habit-day-dot.today:hover {
+  background: rgba(139, 92, 246, 0.1) !important;
+  border-color: var(--accent-purple) !important;
+  transform: scale(1.05);
+}
+
+
 

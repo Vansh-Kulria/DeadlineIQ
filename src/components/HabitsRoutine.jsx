@@ -6,6 +6,7 @@ export default function HabitsRoutine({ setHabitModalOpen }) {
   const { 
     habits, 
     toggleHabitDay, 
+    deleteHabit,
     goals, 
     addGoal, 
     deleteGoal,
@@ -46,12 +47,14 @@ export default function HabitsRoutine({ setHabitModalOpen }) {
       const cellMidnight = new Date(current);
       cellMidnight.setHours(0,0,0,0);
       const isFuture = cellMidnight > checkToday;
+      const isToday = curStr === todayStr;
 
       historyDays.push({
         dateStr: curStr,
         dayName,
         isCompleted,
-        isFuture
+        isFuture,
+        isToday
       });
     }
 
@@ -112,20 +115,29 @@ export default function HabitsRoutine({ setHabitModalOpen }) {
             const historyDays = getHistoryDays(h);
             return (
               <div className="habit-card glass-panel" key={h.id}>
-                <div className="habit-header">
-                  <span className="habit-title">{h.name}</span>
-                  <span className="habit-streak">
-                    <Zap size={12} style={{ fill: 'var(--accent-amber)', color: 'var(--accent-amber)', marginRight: '4px' }} /> 
-                    {h.streak} Day Streak
-                  </span>
+                <div className="habit-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span className="habit-title" style={{ fontWeight: 700 }}>{h.name}</span>
+                    <span className="habit-streak">
+                      <Zap size={11} style={{ fill: 'var(--accent-amber)', color: 'var(--accent-amber)', marginRight: '4px' }} /> 
+                      {h.streak} Day Streak
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => deleteHabit(h.id)}
+                    className="habit-delete-btn"
+                    title="Delete Habit"
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </div>
                 <div className="habit-history">
                   {historyDays.map((day, idx) => (
-                    <div className="habit-day" key={idx}>
+                    <div className="habit-day" key={idx} title={day.isToday ? "Click to check-in for today" : `${day.dayName} (Read-Only)`}>
                       <span className="habit-day-label">{day.dayName}</span>
                       <div 
-                        className={`habit-day-dot ${day.isCompleted ? 'completed' : ''} ${day.isFuture ? 'future' : ''}`}
-                        onClick={() => !day.isFuture && toggleHabitDay(h.id, day.dateStr)}
+                        className={`habit-day-dot ${day.isCompleted ? 'completed' : ''} ${day.isFuture ? 'future' : ''} ${day.isToday ? 'today' : 'read-only'}`}
+                        onClick={() => day.isToday && toggleHabitDay(h.id, day.dateStr)}
                       >
                         {day.isCompleted ? '✓' : ''}
                       </div>
