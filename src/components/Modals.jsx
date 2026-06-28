@@ -349,12 +349,28 @@ export default function Modals({
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button 
-                className="btn btn-secondary btn-icon" 
+                className="btn btn-accent" 
                 onClick={handleOpenDetailedScheduler} 
                 title="Open detailed task scheduler"
-                style={{ width: '32px', height: '32px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  fontSize: '11px', 
+                  padding: '4px 10px', 
+                  height: '32px',
+                  borderRadius: '8px',
+                  background: 'var(--accent-purple)',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 0 10px rgba(139, 92, 246, 0.35)',
+                  transition: 'all 0.2s'
+                }}
               >
-                <Plus size={16} />
+                <Plus size={13} />
+                <span>Detailed Scheduler</span>
               </button>
               <button 
                 className="calendar-modal-close-btn" 
