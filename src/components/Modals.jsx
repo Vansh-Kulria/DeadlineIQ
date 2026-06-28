@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useApp, getLocalDateTimeString } from '../context/AppContext';
-import { Copy } from 'lucide-react';
+import { 
+  Copy, 
+  Clock, 
+  Video, 
+  CheckCircle, 
+  Circle, 
+  Trash2, 
+  Plus, 
+  X, 
+  Calendar,
+  Layers,
+  Sparkles,
+  Zap
+} from 'lucide-react';
 
 export default function Modals({
   taskModalOpen, setTaskModalOpen,
@@ -8,9 +21,11 @@ export default function Modals({
   deliverableModalOpen, setDeliverableModalOpen,
   deliverableContent,
   deliverableTitle,
-  preFilledDate, setPreFilledDate
+  preFilledDate, setPreFilledDate,
+  calendarModalOpen, setCalendarModalOpen,
+  calendarModalDate
 }) {
-  const { addTask, addHabit } = useApp();
+  const { tasks, addTask, deleteTask, toggleTask, addHabit } = useApp();
 
   // 1. Task Modal States
   const [taskTitle, setTaskTitle] = useState('');
@@ -19,6 +34,11 @@ export default function Modals({
   const [taskEnergy, setTaskEnergy] = useState('medium');
   const [taskDeadline, setTaskDeadline] = useState('');
   const [taskComplexity, setTaskComplexity] = useState(3);
+
+  // 2. Quick Add in Calendar State
+  const [quickTitle, setQuickTitle] = useState('');
+  const [quickTime, setQuickTime] = useState('09:00');
+  const [quickCategory, setQuickCategory] = useState('work');
 
   // Set default deadline to tomorrow noon
   useEffect(() => {
@@ -63,7 +83,7 @@ export default function Modals({
     setTaskModalOpen(false);
   };
 
-  // 2. Habit Modal States
+  // 3. Habit Modal States
   const [habitName, setHabitName] = useState('');
 
   const handleHabitSubmit = () => {
@@ -76,7 +96,7 @@ export default function Modals({
     setHabitModalOpen(false);
   };
 
-  // 3. Deliverable Actions
+  // 4. Deliverable Actions
   const handleCopyDeliverable = () => {
     if (deliverableContent) {
       navigator.clipboard.writeText(deliverableContent).then(() => {
@@ -86,6 +106,71 @@ export default function Modals({
       });
     }
   };
+
+  // 5. Calendar Day Agenda Helpers
+  const handleQuickAdd = (e) => {
+    e.preventDefault();
+    if (!quickTitle.trim()) return;
+
+    addTask({
+      title: quickTitle.trim(),
+      deadline: `${calendarModalDate}T${quickTime}`,
+      category: quickCategory,
+      complexity: 3,
+      energyCost: 'medium'
+    });
+
+    setQuickTitle('');
+  };
+
+  const handleOpenDetailedScheduler = () => {
+    const now = new Date();
+    const hrs = now.getHours().toString().padStart(2, '0');
+    const mins = now.getMinutes().toString().padStart(2, '0');
+    const formattedVal = `${calendarModalDate}T${hrs}:${mins}`;
+    setPreFilledDate(formattedVal);
+    setCalendarModalOpen(false);
+    setTaskModalOpen(true);
+  };
+
+  const getSelectedDateObj = () => {
+    if (!calendarModalDate) return new Date();
+    const parts = calendarModalDate.split('-');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    return new Date();
+  };
+
+  const formatTimeStr = (tStr) => {
+    if (!tStr) return '';
+    const [h, m] = tStr.split(':');
+    const hr = parseInt(h);
+    const ampm = hr >= 12 ? 'PM' : 'AM';
+    const hr12 = hr % 12 || 12;
+    return `${String(hr12).padStart(2, '0')}:${m} ${ampm}`;
+  };
+
+  const getTodayStr = () => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const selectedDateObj = getSelectedDateObj();
+  const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+  const formattedSelectedDate = calendarModalDate ? selectedDateObj.toLocaleDateString('en-US', dateOptions) : '';
+  const isSelectedToday = calendarModalDate === getTodayStr();
+
+  // Filter tasks for selected day agenda
+  const selectedDayTasks = calendarModalDate ? tasks.filter(t => t.deadline && t.deadline.startsWith(calendarModalDate)) : [];
+  const sortedDayTasks = [...selectedDayTasks].sort((a, b) => {
+    const timeA = a.deadline.includes('T') ? a.deadline.split('T')[1] : '00:00';
+    const timeB = b.deadline.includes('T') ? b.deadline.split('T')[1] : '00:00';
+    return timeA.localeCompare(timeB);
+  });
 
   return (
     <>
@@ -243,6 +328,148 @@ export default function Modals({
             </button>
             <button className="btn btn-primary" onClick={() => setDeliverableModalOpen(false)}>Done</button>
           </div>
+        </div>
+      </div>
+
+      {/* MODAL: Calendar Day Agenda & Quick Scheduler (Root-level, unclipped) */}
+      <div 
+        className={`modal-overlay ${calendarModalOpen ? 'active' : ''}`} 
+        onClick={() => setCalendarModalOpen(false)}
+        style={{ zIndex: 1050 }}
+      >
+        <div 
+          className="modal-content glass-panel" 
+          onClick={(e) => e.stopPropagation()} 
+          style={{ width: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', padding: '24px' }}
+        >
+          <div className="agenda-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div className="agenda-title-row" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="agenda-title" style={{ fontSize: '16px', fontWeight: '800', color: '#fff' }}>{formattedSelectedDate}</span>
+              {isSelectedToday && <span className="agenda-today-badge">Today</span>}
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button 
+                className="btn btn-secondary btn-icon" 
+                onClick={handleOpenDetailedScheduler} 
+                title="Open detailed task scheduler"
+                style={{ width: '32px', height: '32px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Plus size={16} />
+              </button>
+              <button 
+                className="calendar-modal-close-btn" 
+                onClick={() => setCalendarModalOpen(false)} 
+                title="Close Panel"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="agenda-list" style={{ flex: 1, overflowY: 'auto', marginBottom: '20px', minHeight: '150px', maxHeight: '350px' }}>
+            {sortedDayTasks.length === 0 ? (
+              <div className="agenda-empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px 0', opacity: 0.6 }}>
+                <Calendar size={28} style={{ color: 'var(--text-muted)', marginBottom: '8px' }} />
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>No meetings or work scheduled for this day.</p>
+              </div>
+            ) : (
+              sortedDayTasks.map(t => {
+                const isCompleted = t.status === 'completed';
+                const timePart = t.deadline.includes('T') ? t.deadline.split('T')[1] : '';
+                const isMeeting = t.title.toLowerCase().includes('meeting') || 
+                                  t.title.toLowerCase().includes('sync') || 
+                                  t.title.toLowerCase().includes('call');
+
+                return (
+                  <div key={t.id} className={`agenda-item ${isCompleted ? 'completed' : ''}`} style={{ display: 'flex', alignItems: 'flex-start', padding: '10px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '8px', gap: '10px' }}>
+                    <button className="agenda-check-btn" onClick={() => toggleTask(t.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: isCompleted ? 'var(--accent-teal)' : 'var(--text-muted)', padding: 0 }}>
+                      {isCompleted ? <CheckCircle size={17} className="completed-check" /> : <Circle size={17} />}
+                    </button>
+                    
+                    <div className="agenda-item-content" style={{ flex: 1 }}>
+                      <div className="agenda-item-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span className="agenda-item-title" style={{ fontSize: '13px', fontWeight: 600, color: isCompleted ? 'var(--text-muted)' : '#fff', textDecoration: isCompleted ? 'line-through' : 'none' }}>{t.title}</span>
+                        <button className="agenda-delete-btn" onClick={() => deleteTask(t.id)} title="Delete task" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px' }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+
+                      <div className="agenda-item-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                        {timePart && (
+                          <span className="agenda-time" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={11} />
+                            {formatTimeStr(timePart)}
+                          </span>
+                        )}
+
+                        {isMeeting ? (
+                          <span className="agenda-badge meeting-badge" style={{ display: 'flex', alignItems: 'center', background: 'rgba(139,92,246,0.1)', color: 'var(--accent-purple)', padding: '2px 6px', borderRadius: '4px' }}>
+                            <Video size={10} style={{ marginRight: '3px' }} /> Meeting
+                          </span>
+                        ) : (
+                          <span className={`agenda-badge ${t.category}`} style={{ padding: '2px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)' }}>
+                            {t.category}
+                          </span>
+                        )}
+
+                        {t.estimatedTime && (
+                          <span style={{ opacity: 0.7 }}>({t.estimatedTime})</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Quick Schedule Input inside the Modal Layer */}
+          <form className="agenda-quick-add" onSubmit={handleQuickAdd} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <span className="quick-add-title" style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Zap size={12} style={{ color: 'var(--accent-teal)' }} /> Quick Schedule on this Day
+            </span>
+            
+            <div className="quick-add-inputs" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input 
+                type="text" 
+                className="quick-add-input" 
+                placeholder="Task or Meeting title"
+                value={quickTitle}
+                onChange={(e) => setQuickTitle(e.target.value)}
+                required
+                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '13px' }}
+              />
+              
+              <div className="quick-add-row" style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="time" 
+                  className="quick-add-input quick-add-time"
+                  value={quickTime}
+                  onChange={(e) => setQuickTime(e.target.value)}
+                  required
+                  style={{ flex: 1, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '13px' }}
+                />
+                
+                <select 
+                  className="quick-add-select"
+                  value={quickCategory}
+                  onChange={(e) => setQuickCategory(e.target.value)}
+                  style={{ flex: 1, background: '#11101e', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '8px', color: '#fff', fontSize: '13px', cursor: 'pointer' }}
+                >
+                  <option value="work">Work</option>
+                  <option value="study">Study</option>
+                  <option value="finance">Finance</option>
+                  <option value="personal">Personal</option>
+                </select>
+                
+                <button type="submit" className="btn btn-primary" style={{ height: '38px', borderRadius: '8px', padding: '0 16px', fontSize: '13px', fontWeight: 600 }}>
+                  Add
+                </button>
+              </div>
+            </div>
+          </form>
+
         </div>
       </div>
     </>

@@ -159,7 +159,9 @@ export default function FocusArena() {
 
           {/* Time Configuration Cards */}
           <div className="timer-settings-card" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
-            <span className="timer-settings-title">⚙️ Configure Session Duration</span>
+            <span className="timer-settings-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              Configure Session Duration
+            </span>
             
             {/* Presets */}
             <div className="timer-preset-row">

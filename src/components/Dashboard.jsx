@@ -78,11 +78,11 @@ export default function Dashboard() {
 
     // Efficiency Description
     if (score >= 80) {
-      setEfficiencyDesc('🔥 Elite Rescue Level! You are mastering your time limits.');
+      setEfficiencyDesc('elite');
     } else if (score >= 50) {
-      setEfficiencyDesc('⚡ Moderate Alert. Schedule pending critical items.');
+      setEfficiencyDesc('moderate');
     } else {
-      setEfficiencyDesc('🚨 Rescue Critical. Deadlines are slipping, use AI planner!');
+      setEfficiencyDesc('critical');
     }
   }, [tasks, habits]);
 
@@ -152,7 +152,7 @@ export default function Dashboard() {
         blocks.push({
           time: formatTime(currentMinutes),
           label: 'Lunch Break',
-          task: 'Recharge & Hydrate 🥗',
+          task: 'Recharge & Hydrate',
           duration: '45m',
           priority: 'None',
           isBreak: true
@@ -180,7 +180,7 @@ export default function Dashboard() {
             blocks.push({
               time: formatTime(currentMinutes),
               label: 'Rest & Stretch',
-              task: 'Step away from screen 🧘',
+              task: 'Step away from screen',
               duration: '15m',
               priority: 'None',
               isBreak: true
@@ -203,7 +203,7 @@ export default function Dashboard() {
           blocks.push({
             time: formatTime(currentMinutes),
             label: 'Short Break',
-            task: 'Hydrate & rest your eyes 💧',
+            task: 'Hydrate & rest your eyes',
             duration: '10m',
             priority: 'None',
             isBreak: true
@@ -217,7 +217,7 @@ export default function Dashboard() {
     blocks.push({
       time: formatTime(currentMinutes),
       label: 'Daily Review & Wrap-up',
-      task: 'Review achievements & plan tomorrow 📝',
+      task: 'Review achievements & plan tomorrow',
       duration: '15m',
       priority: 'Low',
       isBreak: true
@@ -305,7 +305,9 @@ export default function Dashboard() {
           <div className="glass-panel ai-schedule-timeline" style={{ marginBottom: '24px', padding: timelineBlocks.length === 0 ? '40px 24px' : '24px' }}>
             {timelineBlocks.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '16px' }}>
-                <div style={{ fontSize: '36px', marginBottom: '14px', filter: 'drop-shadow(0 4px 10px rgba(139, 92, 246, 0.4))' }}>✨</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+                  <Sparkles size={36} style={{ color: 'var(--accent-purple)', filter: 'drop-shadow(0 4px 10px rgba(139, 92, 246, 0.4))' }} />
+                </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Your day is clear!</h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', margin: '8px auto 0 auto', maxWidth: '340px', lineHeight: 1.6 }}>
                   No pending tasks found. Use the NLP Commander in the Task Brain to add tasks and automatically construct your custom AI daily schedule.
@@ -412,14 +414,14 @@ export default function Dashboard() {
               </div>
             </div>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '15px' }} id="efficiency-desc">
-              {efficiencyDesc.startsWith('🔥') && (
-                <span>🔥 <span style={{ color: 'var(--accent-emerald)' }}>Elite Rescue Level!</span> You are mastering your time limits.</span>
+              {efficiencyDesc === 'elite' && (
+                <span><span style={{ color: 'var(--accent-emerald)', fontWeight: 600 }}>Elite Rescue Level!</span> You are mastering your time limits.</span>
               )}
-              {efficiencyDesc.startsWith('⚡') && (
-                <span>⚡ <span style={{ color: 'var(--accent-amber)' }}>Moderate Alert.</span> Schedule pending critical items.</span>
+              {efficiencyDesc === 'moderate' && (
+                <span><span style={{ color: 'var(--accent-amber)', fontWeight: 600 }}>Moderate Alert.</span> Schedule pending critical items.</span>
               )}
-              {efficiencyDesc.startsWith('🚨') && (
-                <span>🚨 <span style={{ color: 'var(--accent-rose)' }}>Rescue Critical.</span> Deadlines are slipping, use AI planner!</span>
+              {efficiencyDesc === 'critical' && (
+                <span><span style={{ color: 'var(--accent-rose)', fontWeight: 600 }}>Rescue Critical.</span> Deadlines are slipping, use AI planner!</span>
               )}
             </p>
           </div>

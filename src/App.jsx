@@ -25,6 +25,8 @@ function MainAppLayout() {
   const [deliverableContent, setDeliverableContent] = useState('');
   const [deliverableTitle, setDeliverableTitle] = useState('');
   const [preFilledDate, setPreFilledDate] = useState('');
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [calendarModalDate, setCalendarModalDate] = useState('');
 
   if (authLoading) {
     return (
@@ -86,6 +88,8 @@ function MainAppLayout() {
           <CalendarView 
             setTaskModalOpen={setTaskModalOpen} 
             setPreFilledDate={setPreFilledDate} 
+            setCalendarModalOpen={setCalendarModalOpen}
+            setCalendarModalDate={setCalendarModalDate}
           />
         )}
         {activePage === 'focus' && <FocusArena />}
@@ -111,6 +115,9 @@ function MainAppLayout() {
         deliverableTitle={deliverableTitle}
         preFilledDate={preFilledDate}
         setPreFilledDate={setPreFilledDate}
+        calendarModalOpen={calendarModalOpen}
+        setCalendarModalOpen={setCalendarModalOpen}
+        calendarModalDate={calendarModalDate}
       />
     </>
   );
