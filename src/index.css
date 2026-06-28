@@ -3232,13 +3232,14 @@ header {
 
   /* ── Main content: add space at bottom for bottom nav ── */
   #main-content {
-    height: 100vh;
-    padding-bottom: 64px;
+    height: auto;
+    min-height: 100vh;
+    padding-bottom: 80px;
   }
 
   /* ── Page containers: better spacing & breathing room ── */
   .page-container {
-    padding: 20px 16px 24px 16px !important;
+    padding: 20px 16px 80px 16px !important;
   }
 
   /* ── Glass panels: better mobile padding ── */
