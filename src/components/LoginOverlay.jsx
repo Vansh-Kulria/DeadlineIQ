@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Zap } from 'lucide-react';
+import { Zap, Cloud, Lock } from 'lucide-react';
 
 export default function LoginOverlay() {
   const { user, localMode, signInWithGoogle, useLocalMode } = useApp();
@@ -50,9 +50,24 @@ export default function LoginOverlay() {
 
         {/* Feature highlights */}
         <div className="login-features">
-          <div className="login-feature"><span className="feature-icon">☁️</span><span>Real-time cloud sync across all devices</span></div>
-          <div className="login-feature"><span className="feature-icon">⚡</span><span>Changes appear on every screen in &lt; 1 second</span></div>
-          <div className="login-feature"><span className="feature-icon">🔒</span><span>Private data secured with Google Auth</span></div>
+          <div className="login-feature">
+            <span className="feature-icon">
+              <Cloud size={15} style={{ color: 'var(--accent-teal)', strokeWidth: 2.5 }} />
+            </span>
+            <span>Real-time cloud sync across all devices</span>
+          </div>
+          <div className="login-feature">
+            <span className="feature-icon">
+              <Zap size={14} style={{ color: 'var(--accent-purple)', fill: 'var(--accent-purple)', strokeWidth: 1.5 }} />
+            </span>
+            <span>Changes appear on every screen in &lt; 1 second</span>
+          </div>
+          <div className="login-feature">
+            <span className="feature-icon">
+              <Lock size={15} style={{ color: 'var(--accent-rose)', strokeWidth: 2.5 }} />
+            </span>
+            <span>Private data secured with Google Auth</span>
+          </div>
         </div>
 
         {/* Google Sign-In */}
