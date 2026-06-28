@@ -2967,6 +2967,308 @@ header {
 }
 
 
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE BOTTOM NAVIGATION BAR
+   ════════════════════════════════════════════════════════════════════ */
+.bottom-nav {
+  display: none; /* Hidden on desktop */
+}
 
+@media (max-width: 768px) {
+  /* ── Show bottom nav bar ── */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    height: 64px;
+    background: rgba(12, 10, 28, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    min-width: 56px;
+    position: relative;
+  }
+
+  .bottom-nav-item.active {
+    color: var(--accent-purple);
+  }
+
+  .bottom-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 3px;
+    background: var(--accent-purple);
+    border-radius: 0 0 3px 3px;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+  }
+
+  .bottom-nav-item span {
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Header padding & spacing increase ── */
+  header {
+    height: 56px !important;
+    padding: 0 16px !important;
+    gap: 8px;
+  }
+
+  .header-left h1 {
+    font-size: 15px !important;
+    letter-spacing: -0.2px;
+  }
+
+  #menu-toggle-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  /* ── Main content: add space at bottom for bottom nav ── */
+  #main-content {
+    height: 100vh;
+    padding-bottom: 64px;
+  }
+
+  /* ── Page containers: better spacing & breathing room ── */
+  .page-container {
+    padding: 20px 16px 24px 16px !important;
+  }
+
+  /* ── Glass panels: better mobile padding ── */
+  .glass-panel {
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+
+  /* ── Status cards stack with proper gap ── */
+  .status-row {
+    gap: 12px !important;
+  }
+
+  .status-card {
+    padding: 14px 16px !important;
+  }
+
+  /* ── Section title rows ── */
+  .section-title-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .section-title-row h2 {
+    font-size: 15px !important;
+  }
+
+  .section-title-row .btn {
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+  }
+
+  /* ── Calendar controls on mobile: stack vertically ── */
+  .calendar-controls {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  /* ── User profile in header: compact ── */
+  .user-profile {
+    gap: 4px !important;
+  }
+
+  .user-name {
+    display: none !important;
+  }
+
+  .user-avatar {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .signout-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* ── Voice HUD compact mode ── */
+  .voice-hud {
+    padding: 4px 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .voice-input-box {
+    width: 80px !important;
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+  }
+
+  .mic-btn {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  /* ── Sync badge compact ── */
+  .sync-badge {
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+  }
+
+  /* ── Focus arena timer adjustments ── */
+  .timer-section {
+    padding: 20px 16px !important;
+  }
+
+  .timer-controls .btn-icon {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .timer-controls .btn-accent.btn-icon {
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  /* ── Timer presets row: wrap for mobile ── */
+  .timer-preset-row {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  /* ── Task cards: better readability ── */
+  .task-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  /* ── Habit cards ── */
+  .habit-card {
+    padding: 14px !important;
+  }
+
+  .habit-card-header {
+    gap: 8px !important;
+  }
+
+  /* ── Dashboard grid spacing ── */
+  .dashboard-left,
+  .dashboard-right {
+    margin-bottom: 16px !important;
+  }
+
+  /* ── Timeline blocks on mobile ── */
+  .timeline-block {
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  .timeline-time {
+    min-width: auto !important;
+  }
+
+  /* ── Coach panel suggestions ── */
+  .coach-suggestion-item {
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  /* ── Collaboration card spacing ── */
+  .collaboration-card {
+    padding: 16px !important;
+  }
+
+  /* ── Productivity ring: smaller on mobile ── */
+  .productivity-score-ring svg {
+    width: 120px !important;
+    height: 120px !important;
+  }
+
+  /* ── Modals: full width on mobile ── */
+  .modal-content {
+    width: calc(100vw - 32px) !important;
+    max-width: 100% !important;
+    max-height: 85vh !important;
+    margin: 16px !important;
+  }
+
+  .modal-body {
+    padding: 16px !important;
+  }
+
+  .form-row {
+    flex-direction: column !important;
+  }
+
+  /* ── Calendar event pills compact ── */
+  .calendar-grid {
+    gap: 2px !important;
+  }
+}
+
+/* ── Extra small screens (< 400px) ── */
+@media (max-width: 400px) {
+  .bottom-nav {
+    height: 58px;
+  }
+
+  .bottom-nav-item {
+    min-width: 48px;
+    font-size: 9px;
+    padding: 4px 6px;
+  }
+
+  .bottom-nav-item svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  header {
+    height: 50px !important;
+  }
+
+  .header-left h1 {
+    font-size: 13px !important;
+  }
+
+  .voice-hud {
+    display: none !important;
+  }
+
+  .page-container {
+    padding: 14px 12px 20px 12px !important;
+  }
+
+  #main-content {
+    padding-bottom: 58px;
+  }
+}
 

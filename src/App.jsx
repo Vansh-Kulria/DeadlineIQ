@@ -10,6 +10,7 @@ import FocusArena from './components/FocusArena';
 import HabitsRoutine from './components/HabitsRoutine';
 import AIAgent from './components/AIAgent';
 import Modals from './components/Modals';
+import BottomNav from './components/BottomNav';
 
 function MainAppLayout() {
   const { activePage, authLoading } = useApp();
@@ -119,6 +120,9 @@ function MainAppLayout() {
         setCalendarModalOpen={setCalendarModalOpen}
         calendarModalDate={calendarModalDate}
       />
+
+      {/* 6. Mobile bottom navigation bar */}
+      <BottomNav />
     </>
   );
 }
