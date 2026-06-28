@@ -5,6 +5,10 @@ import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const AppContext = createContext();
 
+// Paste your Google AI Studio / Gemini API Key here to enable real AI generation
+const GEMINI_API_KEY = ""; 
+
+
 // Helper to generate local YYYY-MM-DDTHH:MM strings
 export function getLocalDateTimeString(offsetMs = 0) {
   const d = new Date(Date.now() + offsetMs);
@@ -25,7 +29,16 @@ const SEED_TASKS = [
     energyCost: 'high',
     deadline: getLocalDateTimeString(4 * 60 * 60 * 1000), // 4 hours from now
     complexity: 4,
-    status: 'pending'
+    status: 'pending',
+    estimatedTime: '3h 0m',
+    subtasks: [
+      { id: 'sub-1-1', title: 'Summarize key equations', completed: true },
+      { id: 'sub-1-2', title: 'Clean up graph data & plots', completed: false },
+      { id: 'sub-1-3', title: 'Write introduction paragraphs', completed: false }
+    ],
+    priorityScore: 88,
+    priorityLevel: 'Critical',
+    missRisk: 75
   },
   {
     id: 'task-2',
@@ -35,7 +48,15 @@ const SEED_TASKS = [
     energyCost: 'low',
     deadline: getLocalDateTimeString(18 * 60 * 60 * 1000), // 18 hours from now
     complexity: 1,
-    status: 'pending'
+    status: 'pending',
+    estimatedTime: '0h 45m',
+    subtasks: [
+      { id: 'sub-2-1', title: 'Verify meter reading invoice', completed: false },
+      { id: 'sub-2-2', title: 'Transfer fund payment securely', completed: false }
+    ],
+    priorityScore: 48,
+    priorityLevel: 'Medium',
+    missRisk: 20
   },
   {
     id: 'task-3',
@@ -45,7 +66,16 @@ const SEED_TASKS = [
     energyCost: 'high',
     deadline: getLocalDateTimeString(72 * 60 * 60 * 1000), // 3 days from now
     complexity: 5,
-    status: 'pending'
+    status: 'pending',
+    estimatedTime: '3h 45m',
+    subtasks: [
+      { id: 'sub-3-1', title: 'Examine API endpoint schemas', completed: false },
+      { id: 'sub-3-2', title: 'Write feedback on caching layers', completed: false },
+      { id: 'sub-3-3', title: 'Outline draft comments for team', completed: false }
+    ],
+    priorityScore: 65,
+    priorityLevel: 'High',
+    missRisk: 30
   },
   {
     id: 'task-4',
@@ -55,7 +85,16 @@ const SEED_TASKS = [
     energyCost: 'low',
     deadline: getLocalDateTimeString(30 * 60 * 60 * 1000), // 30 hours from now
     complexity: 2,
-    status: 'pending'
+    status: 'pending',
+    estimatedTime: '1h 30m',
+    subtasks: [
+      { id: 'sub-4-1', title: 'Organize desktop cables', completed: true },
+      { id: 'sub-4-2', title: 'Clean mechanical keyboard', completed: false },
+      { id: 'sub-4-3', title: 'Wipe down dual displays', completed: false }
+    ],
+    priorityScore: 35,
+    priorityLevel: 'Low',
+    missRisk: 15
   }
 ];
 
@@ -74,6 +113,337 @@ const SEED_HABITS = [
   }
 ];
 
+const SEED_GOALS = [
+  {
+    id: 'goal-1',
+    title: 'Learn Machine Learning',
+    progress: 60,
+    weeks: [
+      {
+        name: 'Week 1: Core Prerequisites',
+        tasks: [
+          { id: 'gt-1', title: 'Python Basics Revision', completed: true },
+          { id: 'gt-2', title: 'NumPy Arrays & Math Operations', completed: true },
+          { id: 'gt-3', title: 'Pandas Data Analysis Toolkit', completed: false }
+        ]
+      },
+      {
+        name: 'Week 2: Supervised Learning Models',
+        tasks: [
+          { id: 'gt-4', title: 'Linear Regression implementation', completed: false },
+          { id: 'gt-5', title: 'Classification with Decision Trees', completed: false }
+        ]
+      }
+    ]
+  }
+];
+
+// Helper to calculate task priority and deadline miss risk
+export const calculatePriority = (task) => {
+  const now = new Date();
+  const deadlineDiff = new Date(task.deadline) - now;
+  const hoursRemaining = deadlineDiff / (1000 * 60 * 60);
+
+  let timeFactor = 0;
+  if (hoursRemaining <= 0) {
+    timeFactor = 100;
+  } else {
+    // scale factor based on deadline: closer deadline = higher score
+    timeFactor = Math.max(0, 100 - (hoursRemaining / 1.5));
+  }
+
+  const complexityFactor = (task.complexity || 3) * 20;
+  const energyMap = { high: 100, medium: 60, low: 30 };
+  const energyFactor = energyMap[task.energyCost] || 50;
+
+  // priorityScore out of 100
+  const priorityScore = Math.round((timeFactor * 0.6) + (complexityFactor * 0.25) + (energyFactor * 0.15));
+
+  let priorityLevel = 'Low';
+  if (priorityScore >= 80) priorityLevel = 'Critical';
+  else if (priorityScore >= 60) priorityLevel = 'High';
+  else if (priorityScore >= 40) priorityLevel = 'Medium';
+
+  // missRisk: Urgency index based on complexity-based estimated hours vs remaining time
+  const estHours = (task.complexity || 3) * 0.75;
+  let missRisk = 15;
+  if (hoursRemaining <= 0) {
+    missRisk = 100;
+  } else {
+    const ratio = estHours / hoursRemaining;
+    missRisk = Math.min(99, Math.round(Math.max(10, ratio * 50 + (task.complexity || 3) * 5)));
+  }
+
+  return {
+    priorityScore,
+    priorityLevel,
+    missRisk
+  };
+};
+
+// Smart dynamic roadmap generator
+export const generateSmartRoadmap = (title) => {
+  const clean = title.toLowerCase().trim();
+  let weeks = [];
+  const titleCap = title.charAt(0).toUpperCase() + title.slice(1);
+
+  if (clean.includes('react') || clean.includes('native') || clean.includes('frontend') || clean.includes('web dev') || clean.includes('javascript') || clean.includes('code') || clean.includes('programming') || clean.includes('website') || clean.includes('html') || clean.includes('css')) {
+    weeks = [
+      {
+        name: 'Week 1: Setup & Environment Configurations',
+        tasks: [
+          { id: `gt-${Date.now()}-1`, title: 'Initialize repository, configure prettier/eslint and linters', completed: false },
+          { id: `gt-${Date.now()}-2`, title: 'Sketch component hierarchy tree and draft primary views', completed: false },
+          { id: `gt-${Date.now()}-3`, title: 'Write local states, custom event listeners, and hooks', completed: false },
+          { id: `gt-${Date.now()}-4`, title: 'Configure CSS variables, styling layouts, and media queries', completed: false }
+        ]
+      },
+      {
+        name: 'Week 2: Global State & API Orchestration',
+        tasks: [
+          { id: `gt-${Date.now()}-5`, title: 'Set up Global Context provider and action dispatcher hooks', completed: false },
+          { id: `gt-${Date.now()}-6`, title: 'Integrate API authentication services and tokens', completed: false },
+          { id: `gt-${Date.now()}-7`, title: 'Orchestrate API requests, loader widgets and error flags', completed: false }
+        ]
+      },
+      {
+        name: 'Week 3: Accessibility Auditing & Testing',
+        tasks: [
+          { id: `gt-${Date.now()}-8`, title: 'Write unit tests for state actions and core logic components', completed: false },
+          { id: `gt-${Date.now()}-9`, title: 'Audit Accessibility guidelines, tab indexing and contrast ratios', completed: false },
+          { id: `gt-${Date.now()}-10`, title: 'Benchmark execution delays and resolve component rendering lag', completed: false }
+        ]
+      },
+      {
+        name: 'Week 4: Continuous Delivery & Release',
+        tasks: [
+          { id: `gt-${Date.now()}-11`, title: 'Configure deployment workflows via GitHub Actions', completed: false },
+          { id: `gt-${Date.now()}-12`, title: 'Compile assets and push static content to host systems', completed: false },
+          { id: `gt-${Date.now()}-13`, title: 'Publish clean README setup guide and wiki documentation', completed: false }
+        ]
+      }
+    ];
+  } else if (clean.includes('ml') || clean.includes('machine learning') || clean.includes('ai') || clean.includes('data science') || clean.includes('python') || clean.includes('deep learning')) {
+    weeks = [
+      {
+        name: 'Week 1: Prerequisites & Data Wrangling',
+        tasks: [
+          { id: `gt-${Date.now()}-1`, title: 'Revise linear algebra concepts, math tools, and probabilities', completed: false },
+          { id: `gt-${Date.now()}-2`, title: 'Import raw datasets, run descriptive statistics, and plot variables', completed: false },
+          { id: `gt-${Date.now()}-3`, title: 'Wrangle missing properties, perform feature scale transforms', completed: false }
+        ]
+      },
+      {
+        name: 'Week 2: Classic Supervised Training',
+        tasks: [
+          { id: `gt-${Date.now()}-4`, title: 'Train baseline Regression, Random Forest, and SVM models', completed: false },
+          { id: `gt-${Date.now()}-5`, title: 'Analyze accuracy distributions via confusion matrices & ROC-AUC curves', completed: false },
+          { id: `gt-${Date.now()}-6`, title: 'Run automated parameter tuning grids to identify optimal configs', completed: false }
+        ]
+      },
+      {
+        name: 'Week 3: Deep Learning Frameworks',
+        tasks: [
+          { id: `gt-${Date.now()}-7`, title: 'Build Neural Networks architectures using PyTorch/TensorFlow', completed: false },
+          { id: `gt-${Date.now()}-8`, title: 'Draft custom SGD loops, gradient steps, and loss metrics', completed: false },
+          { id: `gt-${Date.now()}-9`, title: 'Configure regularization, dropout layers, and serialize checkpoints', completed: false }
+        ]
+      },
+      {
+        name: 'Week 4: Model Serving & REST APIs',
+        tasks: [
+          { id: `gt-${Date.now()}-10`, title: 'Export trained model artifacts to portable ONNX files', completed: false },
+          { id: `gt-${Date.now()}-11`, title: 'Construct inference API endpoints using FastAPI handlers', completed: false },
+          { id: `gt-${Date.now()}-12`, title: 'Dockerize model services and host on cloud container systems', completed: false }
+        ]
+      }
+    ];
+  } else if (clean.includes('fit') || clean.includes('weight') || clean.includes('gym') || clean.includes('workout') || clean.includes('run') || clean.includes('marathon') || clean.includes('cardio') || clean.includes('exercise')) {
+    weeks = [
+      {
+        name: 'Week 1: Assessment & Target Calculation',
+        tasks: [
+          { id: `gt-${Date.now()}-1`, title: 'Establish weight, bodyfat, active energy and caloric baseline logs', completed: false },
+          { id: `gt-${Date.now()}-2`, title: 'Draft weekly training routines with 3 active slots and 2 rest days', completed: false },
+          { id: `gt-${Date.now()}-3`, title: 'Calculate daily target macronutrients and organize meal prep schedules', completed: false }
+        ]
+      },
+      {
+        name: 'Week 2: Strength Foundations & Cardio Base',
+        tasks: [
+          { id: `gt-${Date.now()}-4`, title: 'Execute three cardiovascular workouts focusing on aerobic base', completed: false },
+          { id: `gt-${Date.now()}-5`, title: 'Perform two functional resistance sessions using correct form', completed: false },
+          { id: `gt-${Date.now()}-6`, title: 'Maintain daily target hydration of 3 liters of water', completed: false }
+        ]
+      },
+      {
+        name: 'Week 3: Progressive Resistance Load',
+        tasks: [
+          { id: `gt-${Date.now()}-7`, title: 'Increase resistance weights or mileage by 10% (progressive overload)', completed: false },
+          { id: `gt-${Date.now()}-8`, title: 'Record training forms via video for safety assessment audits', completed: false },
+          { id: `gt-${Date.now()}-9`, title: 'Incorporate active recovery sessions (stretching/yoga)', completed: false }
+        ]
+      },
+      {
+        name: 'Week 4: Assessment & Next Training Plan',
+        tasks: [
+          { id: `gt-${Date.now()}-10`, title: 'Perform physical measurement checkups to trace changes', completed: false },
+          { id: `gt-${Date.now()}-11`, title: 'Review workout logs and cross-examine consistency ratings', completed: false },
+          { id: `gt-${Date.now()}-12`, title: 'Calibrate parameters to define the next training cycle rules', completed: false }
+        ]
+      }
+    ];
+  } else if (clean.includes('guitar') || clean.includes('piano') || clean.includes('music') || clean.includes('sing') || clean.includes('instrument')) {
+    weeks = [
+      {
+        name: 'Week 1: Instrument Fundamentals',
+        tasks: [
+          { id: `gt-${Date.now()}-1`, title: 'Learn key tuning configurations, hand posture, and note structures', completed: false },
+          { id: `gt-${Date.now()}-2`, title: 'Execute basic muscle/finger movement drills for 15m daily', completed: false },
+          { id: `gt-${Date.now()}-3`, title: 'Memorize first three fundamental chords/notes', completed: false }
+        ]
+      },
+      {
+        name: 'Week 2: Rhythmic Transitions',
+        tasks: [
+          { id: `gt-${Date.now()}-4`, title: 'Practice chord changes cleanly with a slow metronome tempo', completed: false },
+          { id: `gt-${Date.now()}-5`, title: 'Learn two common strumming or note-playing rhythm guides', completed: false },
+          { id: `gt-${Date.now()}-6`, title: 'Record a short playing audio to verify tempo compliance', completed: false }
+        ]
+      },
+      {
+        name: 'Week 3: First Song Breakdown',
+        tasks: [
+          { id: `gt-${Date.now()}-7`, title: 'Deconstruct a simple beginner song chord sequence', completed: false },
+          { id: `gt-${Date.now()}-8`, title: 'Practice transition loops in song structures repeatedly', completed: false },
+          { id: `gt-${Date.now()}-9`, title: 'Play through full song structure at 75% metronome speed', completed: false }
+        ]
+      },
+      {
+        name: 'Week 4: Performance Review',
+        tasks: [
+          { id: `gt-${Date.now()}-10`, title: 'Execute full song at normal speed along with track', completed: false },
+          { id: `gt-${Date.now()}-11`, title: 'Revise major scale outlines to build solo skills', completed: false },
+          { id: `gt-${Date.now()}-12`, title: 'Record final performance video to capture progress milestones', completed: false }
+        ]
+      }
+    ];
+  } else if (clean.includes('spanish') || clean.includes('french') || clean.includes('japanese') || clean.includes('german') || clean.includes('language') || clean.includes('speak')) {
+    weeks = [
+      {
+        name: 'Week 1: Alphabet & Basic Phrases',
+        tasks: [
+          { id: `gt-${Date.now()}-1`, title: 'Learn phonetic structures and pronunciation key systems', completed: false },
+          { id: `gt-${Date.now()}-2`, title: 'Memorize top 50 essential vocabulary words and greetings', completed: false },
+          { id: `gt-${Date.now()}-3`, title: 'Practice basic conversational introductions out loud', completed: false }
+        ]
+      },
+      {
+        name: 'Week 2: Core Sentence Structure',
+        tasks: [
+          { id: `gt-${Date.now()}-4`, title: 'Study standard sentence structures and order rules', completed: false },
+          { id: `gt-${Date.now()}-5`, title: 'Conjugate top 10 most frequent action verbs', completed: false },
+          { id: `gt-${Date.now()}-6`, title: 'Write down 15 basic sentences describing daily schedules', completed: false }
+        ]
+      },
+      {
+        name: 'Week 3: Conversational Comprehension',
+        tasks: [
+          { id: `gt-${Date.now()}-7`, title: 'Listen to a basic conversational audio segment at 0.8x speed', completed: false },
+          { id: `gt-${Date.now()}-8`, title: 'Translate simple written paragraphs using reference resources', completed: false },
+          { id: `gt-${Date.now()}-9`, title: 'Drill flashcard sets for everyday noun terms (100 words)', completed: false }
+        ]
+      },
+      {
+        name: 'Week 4: Speaking Consistency',
+        tasks: [
+          { id: `gt-${Date.now()}-10`, title: 'Perform a 5-minute continuous monologue in target language', completed: false },
+          { id: `gt-${Date.now()}-11`, title: 'Compile basic grammar charts and note common verb tables', completed: false },
+          { id: `gt-${Date.now()}-12`, title: 'Record conversational voice files to verify flow progress', completed: false }
+        ]
+      }
+    ];
+  } else if (clean.includes('book') || clean.includes('write') || clean.includes('novel') || clean.includes('story') || clean.includes('article') || clean.includes('draft')) {
+    weeks = [
+      {
+        name: 'Week 1: Theme & Characterization',
+        tasks: [
+          { id: `gt-${Date.now()}-1`, title: 'Draft primary premises, main themes, and audience notes', completed: false },
+          { id: `gt-${Date.now()}-2`, title: 'Establish comprehensive profiles for main characters (motivation, conflict)', completed: false },
+          { id: `gt-${Date.now()}-3`, title: 'Define settings, structural rules, and primary conflict setups', completed: false }
+        ]
+      },
+      {
+        name: 'Week 2: Structural Outlining',
+        tasks: [
+          { id: `gt-${Date.now()}-4`, title: 'Structure plot points along standard three-act guidelines', completed: false },
+          { id: `gt-${Date.now()}-5`, title: 'Draft chapter-by-chapter timeline bullet items', completed: false },
+          { id: `gt-${Date.now()}-6`, title: 'Draft initial hook scene and introductory paragraphs', completed: false }
+        ]
+      },
+      {
+        name: 'Week 3: Drafting Phase',
+        tasks: [
+          { id: `gt-${Date.now()}-7`, title: 'Write first three chapters focusing entirely on narrative flow', completed: false },
+          { id: `gt-${Date.now()}-8`, title: 'Track daily word count outputs (target 500 words daily)', completed: false },
+          { id: `gt-${Date.now()}-9`, title: 'Develop midpoint turning points and character twist scenes', completed: false }
+        ]
+      },
+      {
+        name: 'Week 4: Review & Revisions',
+        tasks: [
+          { id: `gt-${Date.now()}-10`, title: 'Read draft files aloud to verify pacing and dialogue naturalness', completed: false },
+          { id: `gt-${Date.now()}-11`, title: 'Fix structural pacing problems and rewrite weak paragraphs', completed: false },
+          { id: `gt-${Date.now()}-12`, title: 'Format draft file assets and forward to peer reviewers', completed: false }
+        ]
+      }
+    ];
+  } else {
+    // Dynamic fallback that uses the title itself to customize tasks!
+    weeks = [
+      {
+        name: 'Week 1: Definition & Scoping',
+        tasks: [
+          { id: `gt-${Date.now()}-1`, title: `Outline core requirements for "${titleCap}"`, completed: false },
+          { id: `gt-${Date.now()}-2`, title: `Research references and gather essential assets for "${titleCap}"`, completed: false },
+          { id: `gt-${Date.now()}-3`, title: `Draft preliminary constraints and targets for "${titleCap}"`, completed: false }
+        ]
+      },
+      {
+        name: 'Week 2: Structural Setup & Skeleton',
+        tasks: [
+          { id: `gt-${Date.now()}-4`, title: `Setup baseline configurations for "${titleCap}"`, completed: false },
+          { id: `gt-${Date.now()}-5`, title: `Establish structural skeleton of "${titleCap}"`, completed: false },
+          { id: `gt-${Date.now()}-6`, title: `Verify preliminary setup functions conform to parameters`, completed: false }
+        ]
+      },
+      {
+        name: 'Week 3: Core Execution & Implementation',
+        tasks: [
+          { id: `gt-${Date.now()}-7`, title: `Implement primary mechanisms of "${titleCap}"`, completed: false },
+          { id: `gt-${Date.now()}-8`, title: `Refactor core logic components to streamline flow`, completed: false },
+          { id: `gt-${Date.now()}-9`, title: `Conduct intermediate evaluation checks against goals`, completed: false }
+        ]
+      },
+      {
+        name: 'Week 4: Optimization & Deployment',
+        tasks: [
+          { id: `gt-${Date.now()}-10`, title: `Audit performance metrics and execute error tests`, completed: false },
+          { id: `gt-${Date.now()}-11`, title: `Write usage guides and wiki documents for "${titleCap}"`, completed: false },
+          { id: `gt-${Date.now()}-12`, title: `Launch completed version of "${titleCap}" and log completion`, completed: false }
+        ]
+      }
+    ];
+  }
+
+  return {
+    id: `goal-${Date.now()}`,
+    title: titleCap,
+    progress: 0,
+    weeks
+  };
+};
+
 export const AppProvider = ({ children }) => {
   // Routing & UI
   const [activePage, setActivePage] = useState('dashboard');
@@ -91,6 +461,7 @@ export const AppProvider = ({ children }) => {
   // Data State
   const [tasks, setTasks] = useState([]);
   const [habits, setHabits] = useState([]);
+  const [goals, setGoals] = useState([]);
 
   // AI Priorities Analytics state
   const [aiInsights, setAiInsights] = useState(null);
@@ -126,6 +497,7 @@ export const AppProvider = ({ children }) => {
     // Load local cached values
     const savedTasks = localStorage.getItem('deadlineiq_tasks');
     const savedHabits = localStorage.getItem('deadlineiq_habits');
+    const savedGoals = localStorage.getItem('deadlineiq_goals');
 
     let initialTasks = [];
     if (savedTasks) {
@@ -165,6 +537,14 @@ export const AppProvider = ({ children }) => {
       });
     }
     setHabits(initialHabits);
+
+    let initialGoals = [];
+    if (savedGoals) {
+      initialGoals = JSON.parse(savedGoals);
+    } else {
+      initialGoals = [...SEED_GOALS];
+    }
+    setGoals(initialGoals);
   }, []);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -211,13 +591,19 @@ export const AppProvider = ({ children }) => {
           setHabits(data.habits);
           localStorage.setItem('deadlineiq_habits', JSON.stringify(data.habits));
         }
+        if (Array.isArray(data.goals)) {
+          setGoals(data.goals);
+          localStorage.setItem('deadlineiq_goals', JSON.stringify(data.goals));
+        }
         setSyncStatus('synced');
       } else {
         // First sign in: push local cached data up
-        // We read latest tasks/habits state (use functional state or local ref, but since it runs once we can grab current states)
         setTasks(prevTasks => {
           setHabits(prevHabits => {
-            triggerCloudSave(prevTasks, prevHabits, uid, true);
+            setGoals(prevGoals => {
+              triggerCloudSave(prevTasks, prevHabits, prevGoals, uid, true);
+              return prevGoals;
+            });
             return prevHabits;
           });
           return prevTasks;
@@ -236,10 +622,11 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const triggerCloudSave = (currentTasks, currentHabits, uid = user?.uid, immediate = false) => {
+  const triggerCloudSave = (currentTasks, currentHabits, currentGoals = goals, uid = user?.uid, immediate = false) => {
     // Write locally immediately
     localStorage.setItem('deadlineiq_tasks', JSON.stringify(currentTasks));
     localStorage.setItem('deadlineiq_habits', JSON.stringify(currentHabits));
+    localStorage.setItem('deadlineiq_goals', JSON.stringify(currentGoals));
 
     if (!uid || localMode) {
       setSyncStatus('local');
@@ -255,6 +642,7 @@ export const AppProvider = ({ children }) => {
         await setDoc(docRef, {
           tasks: currentTasks,
           habits: currentHabits,
+          goals: currentGoals,
           lastUpdated: serverTimestamp(),
           _meta: {
             appVersion: '2.1-react',
@@ -280,7 +668,7 @@ export const AppProvider = ({ children }) => {
   const updateTasksAndSave = (updater) => {
     setTasks(prev => {
       const updated = typeof updater === 'function' ? updater(prev) : updater;
-      triggerCloudSave(updated, habits);
+      triggerCloudSave(updated, habits, goals);
       return updated;
     });
   };
@@ -288,7 +676,15 @@ export const AppProvider = ({ children }) => {
   const updateHabitsAndSave = (updater) => {
     setHabits(prev => {
       const updated = typeof updater === 'function' ? updater(prev) : updater;
-      triggerCloudSave(tasks, updated);
+      triggerCloudSave(tasks, updated, goals);
+      return updated;
+    });
+  };
+
+  const updateGoalsAndSave = (updater) => {
+    setGoals(prev => {
+      const updated = typeof updater === 'function' ? updater(prev) : updater;
+      triggerCloudSave(tasks, habits, updated);
       return updated;
     });
   };
@@ -329,9 +725,70 @@ export const AppProvider = ({ children }) => {
 
   // Tasks actions
   const addTask = (task) => {
+    // Auto-categorize based on title keyword scanning
+    let category = task.category;
+    if (!category || category === 'work') {
+      const titleLower = task.title.toLowerCase();
+      if (titleLower.includes('bill') || titleLower.includes('pay') || titleLower.includes('money') || titleLower.includes('finance')) {
+        category = 'finance';
+      } else if (titleLower.includes('study') || titleLower.includes('exam') || titleLower.includes('book') || titleLower.includes('read') || titleLower.includes('learn') || titleLower.includes('prep')) {
+        category = 'study';
+      } else if (titleLower.includes('clean') || titleLower.includes('wash') || titleLower.includes('buy') || titleLower.includes('groceries') || titleLower.includes('personal') || titleLower.includes('room')) {
+        category = 'personal';
+      } else {
+        category = 'work';
+      }
+    }
+
+    // Generate 3-5 subtask checklist automatically
+    let subtasks = [];
+    if (category === 'study') {
+      subtasks = [
+        { id: `sub-${Date.now()}-1`, title: 'Review core concepts and definitions', completed: false },
+        { id: `sub-${Date.now()}-2`, title: 'Draft outline of key takeaways', completed: false },
+        { id: `sub-${Date.now()}-3`, title: 'Verify final calculations/citations', completed: false }
+      ];
+    } else if (category === 'finance') {
+      subtasks = [
+        { id: `sub-${Date.now()}-1`, title: 'Verify billing statements/invoices', completed: false },
+        { id: `sub-${Date.now()}-2`, title: 'Confirm payment method credentials', completed: false },
+        { id: `sub-${Date.now()}-3`, title: 'Initiate transfer & save receipt', completed: false }
+      ];
+    } else if (category === 'personal') {
+      subtasks = [
+        { id: `sub-${Date.now()}-1`, title: 'Gather necessary materials/supplies', completed: false },
+        { id: `sub-${Date.now()}-2`, title: 'Execute primary steps of task', completed: false },
+        { id: `sub-${Date.now()}-3`, title: 'Tidy up workspace and log completion', completed: false }
+      ];
+    } else { // work
+      subtasks = [
+        { id: `sub-${Date.now()}-1`, title: 'Analyze task specifications', completed: false },
+        { id: `sub-${Date.now()}-2`, title: 'Execute core implementation', completed: false },
+        { id: `sub-${Date.now()}-3`, title: 'Review for quality assurance', completed: false },
+        { id: `sub-${Date.now()}-4`, title: 'Commit and notify team members', completed: false }
+      ];
+    }
+
+    // Compute estimatedTime (complexity * 45 minutes)
+    const complexity = task.complexity || 3;
+    const totalMinutes = complexity * 45;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const estimatedTime = `${hours}h ${minutes}m`;
+
+    const initialMetrics = calculatePriority({
+      ...task,
+      category,
+      complexity
+    });
+
     const newTask = {
       id: `task-${Date.now()}`,
       status: 'pending',
+      category,
+      subtasks,
+      estimatedTime,
+      ...initialMetrics,
       ...task
     };
     updateTasksAndSave(prev => [...prev, newTask]);
@@ -350,6 +807,135 @@ export const AppProvider = ({ children }) => {
         return { ...t, status: nextStatus };
       }
       return t;
+    }));
+  };
+
+  const toggleSubtask = (taskId, subtaskId) => {
+    updateTasksAndSave(prev => prev.map(t => {
+      if (t.id === taskId) {
+        const updatedSubtasks = (t.subtasks || []).map(st => {
+          if (st.id === subtaskId) {
+            return { ...st, completed: !st.completed };
+          }
+          return st;
+        });
+        return { ...t, subtasks: updatedSubtasks };
+      }
+      return t;
+    }));
+  };
+
+  // Goals actions
+  const addGoal = (title, type = 'weekly') => {
+    const newGoal = {
+      id: `goal-${Date.now()}`,
+      title: title.charAt(0).toUpperCase() + title.slice(1),
+      type,
+      progress: 0,
+      weeks: []
+    };
+    updateGoalsAndSave(prev => [...prev, newGoal]);
+    speakRecommendation(`Goal "${title}" created with ${type} tracking. You can now add sections.`);
+  };
+
+  const deleteGoal = (goalId) => {
+    updateGoalsAndSave(prev => prev.filter(g => g.id !== goalId));
+  };
+
+  const deleteMilestoneTask = (goalId, weekName, taskId) => {
+    updateGoalsAndSave(prev => prev.map(g => {
+      if (g.id === goalId) {
+        const updatedWeeks = g.weeks.map(w => {
+          if (w.name === weekName) {
+            return {
+              ...w,
+              tasks: w.tasks.filter(t => t.id !== taskId)
+            };
+          }
+          return w;
+        });
+
+        // Recalculate progress percentage
+        const allTasks = updatedWeeks.flatMap(w => w.tasks);
+        const completedCount = allTasks.filter(t => t.completed).length;
+        const progress = allTasks.length > 0 ? Math.round((completedCount / allTasks.length) * 100) : 0;
+
+        return { ...g, weeks: updatedWeeks, progress };
+      }
+      return g;
+    }));
+  };
+
+  const addMilestone = (goalId, name) => {
+    updateGoalsAndSave(prev => prev.map(g => {
+      if (g.id === goalId) {
+        return {
+          ...g,
+          weeks: [...(g.weeks || []), { name, tasks: [] }]
+        };
+      }
+      return g;
+    }));
+  };
+
+  const deleteMilestone = (goalId, weekName) => {
+    updateGoalsAndSave(prev => prev.map(g => {
+      if (g.id === goalId) {
+        const updatedWeeks = g.weeks.filter(w => w.name !== weekName);
+        const allTasks = updatedWeeks.flatMap(w => w.tasks);
+        const completedCount = allTasks.filter(t => t.completed).length;
+        const progress = allTasks.length > 0 ? Math.round((completedCount / allTasks.length) * 100) : 0;
+        return { ...g, weeks: updatedWeeks, progress };
+      }
+      return g;
+    }));
+  };
+
+  const addMilestoneTask = (goalId, weekName, taskTitle) => {
+    updateGoalsAndSave(prev => prev.map(g => {
+      if (g.id === goalId) {
+        const updatedWeeks = g.weeks.map(w => {
+          if (w.name === weekName) {
+            return {
+              ...w,
+              tasks: [...w.tasks, { id: `gt-${Date.now()}`, title: taskTitle, completed: false }]
+            };
+          }
+          return w;
+        });
+
+        // Recalculate progress percentage
+        const allTasks = updatedWeeks.flatMap(w => w.tasks);
+        const completedCount = allTasks.filter(t => t.completed).length;
+        const progress = allTasks.length > 0 ? Math.round((completedCount / allTasks.length) * 100) : 0;
+
+        return { ...g, weeks: updatedWeeks, progress };
+      }
+      return g;
+    }));
+  };
+
+  const toggleGoalTask = (goalId, taskId) => {
+    updateGoalsAndSave(prev => prev.map(g => {
+      if (g.id === goalId) {
+        const updatedWeeks = g.weeks.map(w => {
+          const updatedTasks = w.tasks.map(t => {
+            if (t.id === taskId) {
+              return { ...t, completed: !t.completed };
+            }
+            return t;
+          });
+          return { ...w, tasks: updatedTasks };
+        });
+
+        // Recalculate goal progress percentage
+        const allTasks = updatedWeeks.flatMap(w => w.tasks);
+        const completedCount = allTasks.filter(t => t.completed).length;
+        const progress = allTasks.length > 0 ? Math.round((completedCount / allTasks.length) * 100) : 0;
+
+        return { ...g, weeks: updatedWeeks, progress };
+      }
+      return g;
     }));
   };
 
@@ -432,6 +1018,36 @@ export const AppProvider = ({ children }) => {
     const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     document.title = timerRunning ? `[${timeStr}] DeadlineIQ` : 'DeadlineIQ';
   }, [timeLeft, timerRunning]);
+
+  // Periodic recalculation loop for priorities and delay risks (runs every 10 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTasks(prevTasks => {
+        let changed = false;
+        const updated = prevTasks.map(t => {
+          if (t.status === 'pending') {
+            const calc = calculatePriority(t);
+            if (
+              calc.priorityScore !== t.priorityScore ||
+              calc.priorityLevel !== t.priorityLevel ||
+              calc.missRisk !== t.missRisk
+            ) {
+              changed = true;
+              return { ...t, ...calc };
+            }
+          }
+          return t;
+        });
+        if (changed) {
+          localStorage.setItem('deadlineiq_tasks', JSON.stringify(updated));
+          triggerCloudSave(updated, habits, goals);
+          return updated;
+        }
+        return prevTasks;
+      });
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [habits, goals]);
 
   const toggleTimer = () => {
     initAudio();
@@ -905,14 +1521,15 @@ export const AppProvider = ({ children }) => {
       activeFilter, setActiveFilter,
       showMatrix, setShowMatrix,
       user, localMode, authLoading, syncStatus,
-      tasks, habits,
+      tasks, habits, goals,
       aiInsights, aiPrioritized,
       timeLeft, timerDuration, timerRunning, timerMode,
       activeSounds, soundVolumes,
       speechBubbleText, speechBubbleActive, setSpeechBubbleActive,
       signInWithGoogle, signOutUser, useLocalMode: useLocalModeHandler, switchToCloudMode: switchToCloudModeHandler,
-      addTask, deleteTask, toggleTask,
+      addTask, deleteTask, toggleTask, toggleSubtask,
       addHabit, toggleHabitDay,
+      addGoal, deleteGoal, addMilestone, deleteMilestone, addMilestoneTask, deleteMilestoneTask, toggleGoalTask,
       toggleTimer, resetTimer, skipTimer,
       toggleSound, adjustVolume,
       parseVoiceCommand, runAIPrioritization
