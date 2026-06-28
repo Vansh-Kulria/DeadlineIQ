@@ -29,6 +29,7 @@ export default function HabitsRoutine({ setHabitModalOpen }) {
   const getHistoryDays = (habit) => {
     const historyDays = [];
     const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
     
     // Walk back 6 days + today = 7 days
     const startOfWeek = new Date();
