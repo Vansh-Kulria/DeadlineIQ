@@ -348,6 +348,7 @@ export const AppProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
   const [habits, setHabits] = useState([]);
   const [goals, setGoals] = useState([]);
+  const [focusHistory, setFocusHistory] = useState([]); // Daily focus logs
 
   // AI Priorities Analytics state
   const [aiInsights, setAiInsights] = useState(null);
@@ -386,6 +387,7 @@ export const AppProvider = ({ children }) => {
       localStorage.removeItem('deadlineiq_tasks');
       localStorage.removeItem('deadlineiq_habits');
       localStorage.removeItem('deadlineiq_goals');
+      localStorage.removeItem('deadlineiq_focus_history');
       localStorage.setItem('deadlineiq_data_reset_v1', '1');
     }
 
@@ -440,6 +442,13 @@ export const AppProvider = ({ children }) => {
       initialGoals = [...SEED_GOALS];
     }
     setGoals(initialGoals);
+
+    const savedFocusHistory = localStorage.getItem('deadlineiq_focus_history');
+    let initialFocusHistory = [];
+    if (savedFocusHistory) {
+      initialFocusHistory = JSON.parse(savedFocusHistory);
+    }
+    setFocusHistory(initialFocusHistory);
   }, []);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -490,16 +499,22 @@ export const AppProvider = ({ children }) => {
           setGoals(data.goals);
           localStorage.setItem('deadlineiq_goals', JSON.stringify(data.goals));
         }
+        if (Array.isArray(data.focusHistory)) {
+          setFocusHistory(data.focusHistory);
+          localStorage.setItem('deadlineiq_focus_history', JSON.stringify(data.focusHistory));
+        }
         setSyncStatus('synced');
       } else {
         // Brand new user: initialize cloud and local states as empty arrays!
         setTasks([]);
         setHabits([]);
         setGoals([]);
+        setFocusHistory([]);
         localStorage.setItem('deadlineiq_tasks', JSON.stringify([]));
         localStorage.setItem('deadlineiq_habits', JSON.stringify([]));
         localStorage.setItem('deadlineiq_goals', JSON.stringify([]));
-        triggerCloudSave([], [], [], uid, true);
+        localStorage.setItem('deadlineiq_focus_history', JSON.stringify([]));
+        triggerCloudSave([], [], [], [], uid, true);
         setSyncStatus('synced');
       }
     }, (error) => {
@@ -515,11 +530,12 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const triggerCloudSave = (currentTasks, currentHabits, currentGoals = goals, uid = user?.uid, immediate = false) => {
+  const triggerCloudSave = (currentTasks, currentHabits, currentGoals = goals, currentFocusHistory = focusHistory, uid = user?.uid, immediate = false) => {
     // Write locally immediately
     localStorage.setItem('deadlineiq_tasks', JSON.stringify(currentTasks));
     localStorage.setItem('deadlineiq_habits', JSON.stringify(currentHabits));
     localStorage.setItem('deadlineiq_goals', JSON.stringify(currentGoals));
+    localStorage.setItem('deadlineiq_focus_history', JSON.stringify(currentFocusHistory));
 
     if (!uid || localMode) {
       setSyncStatus('local');
@@ -536,6 +552,7 @@ export const AppProvider = ({ children }) => {
           tasks: currentTasks,
           habits: currentHabits,
           goals: currentGoals,
+          focusHistory: currentFocusHistory,
           lastUpdated: serverTimestamp(),
           _meta: {
             appVersion: '2.1-react',
@@ -608,9 +625,11 @@ export const AppProvider = ({ children }) => {
     setTasks([]);
     setHabits([]);
     setGoals([]);
+    setFocusHistory([]);
     localStorage.setItem('deadlineiq_tasks', JSON.stringify([]));
     localStorage.setItem('deadlineiq_habits', JSON.stringify([]));
     localStorage.setItem('deadlineiq_goals', JSON.stringify([]));
+    localStorage.setItem('deadlineiq_focus_history', JSON.stringify([]));
   };
 
   const useLocalModeHandler = () => {
@@ -636,13 +655,15 @@ export const AppProvider = ({ children }) => {
     setTasks([]);
     setHabits([]);
     setGoals([]);
+    setFocusHistory([]);
     localStorage.setItem('deadlineiq_tasks', JSON.stringify([]));
     localStorage.setItem('deadlineiq_habits', JSON.stringify([]));
     localStorage.setItem('deadlineiq_goals', JSON.stringify([]));
+    localStorage.setItem('deadlineiq_focus_history', JSON.stringify([]));
     if (auth.currentUser?.uid) {
-      triggerCloudSave([], [], [], auth.currentUser.uid, true);
+      triggerCloudSave([], [], [], [], auth.currentUser.uid, true);
     }
-    speakRecommendation("All tasks, habits, and goals have been cleared.");
+    speakRecommendation("All tasks, habits, goals, and focus history have been cleared.");
   };
 
   // Tasks actions
@@ -980,6 +1001,31 @@ export const AppProvider = ({ children }) => {
     setTimerRunning(prev => !prev);
   };
 
+  const changeTimerDuration = (seconds) => {
+    setTimerRunning(false);
+    setTimerDuration(seconds);
+    setTimeLeft(seconds);
+  };
+
+  const addFocusSession = (minutes) => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    setFocusHistory(prev => {
+      const updated = [...prev];
+      const existingIdx = updated.findIndex(log => log.date === todayStr);
+      if (existingIdx !== -1) {
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          minutes: (updated[existingIdx].minutes || 0) + minutes
+        };
+      } else {
+        updated.push({ date: todayStr, minutes });
+      }
+      localStorage.setItem('deadlineiq_focus_history', JSON.stringify(updated));
+      triggerCloudSave(tasks, habits, goals, updated);
+      return updated;
+    });
+  };
+
   const resetTimer = () => {
     setTimerRunning(false);
     if (timerMode === 'work') {
@@ -1002,6 +1048,10 @@ export const AppProvider = ({ children }) => {
     }
 
     if (timerMode === 'work') {
+      if (!skipped) {
+        const sessionMins = Math.round(timerDuration / 60);
+        addFocusSession(sessionMins);
+      }
       setTimerMode('break');
       setTimeLeft(5 * 60);
       setTimerDuration(5 * 60);
@@ -1449,14 +1499,14 @@ export const AppProvider = ({ children }) => {
       user, localMode, authLoading, syncStatus,
       tasks, habits, goals,
       aiInsights, aiPrioritized,
-      timeLeft, timerDuration, timerRunning, timerMode,
+      timeLeft, timerDuration, timerRunning, timerMode, focusHistory,
       activeSounds, soundVolumes,
       speechBubbleText, speechBubbleActive, setSpeechBubbleActive,
       signInWithGoogle, signOutUser, useLocalMode: useLocalModeHandler, switchToCloudMode: switchToCloudModeHandler,
       addTask, deleteTask, toggleTask, toggleSubtask,
       addHabit, deleteHabit, toggleHabitDay,
       addGoal, deleteGoal, addMilestone, deleteMilestone, addMilestoneTask, deleteMilestoneTask, toggleGoalTask,
-      toggleTimer, resetTimer, skipTimer,
+      toggleTimer, resetTimer, skipTimer, changeTimerDuration,
       toggleSound, adjustVolume,
       parseVoiceCommand, runAIPrioritization, clearAllData
     }}>
