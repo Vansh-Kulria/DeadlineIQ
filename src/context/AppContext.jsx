@@ -492,17 +492,15 @@ export const AppProvider = ({ children }) => {
         }
         setSyncStatus('synced');
       } else {
-        // First sign in: push local cached data up
-        setTasks(prevTasks => {
-          setHabits(prevHabits => {
-            setGoals(prevGoals => {
-              triggerCloudSave(prevTasks, prevHabits, prevGoals, uid, true);
-              return prevGoals;
-            });
-            return prevHabits;
-          });
-          return prevTasks;
-        });
+        // Brand new user: initialize cloud and local states as empty arrays!
+        setTasks([]);
+        setHabits([]);
+        setGoals([]);
+        localStorage.setItem('deadlineiq_tasks', JSON.stringify([]));
+        localStorage.setItem('deadlineiq_habits', JSON.stringify([]));
+        localStorage.setItem('deadlineiq_goals', JSON.stringify([]));
+        triggerCloudSave([], [], [], uid, true);
+        setSyncStatus('synced');
       }
     }, (error) => {
       console.error('[DeadlineIQ] Sync listener error:', error);
@@ -605,6 +603,14 @@ export const AppProvider = ({ children }) => {
     setLocalMode(false);
     localStorage.removeItem('deadlineiq_local_mode');
     setSyncStatus('local');
+    
+    // Reset state variables and local cache to isolate user data
+    setTasks([]);
+    setHabits([]);
+    setGoals([]);
+    localStorage.setItem('deadlineiq_tasks', JSON.stringify([]));
+    localStorage.setItem('deadlineiq_habits', JSON.stringify([]));
+    localStorage.setItem('deadlineiq_goals', JSON.stringify([]));
   };
 
   const useLocalModeHandler = () => {
