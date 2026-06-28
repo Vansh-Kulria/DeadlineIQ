@@ -109,16 +109,121 @@ export default function Dashboard() {
     }
   };
 
-  // Dynamic Timeline schedule mapped to top tasks
-  const pendingTasks = tasks.filter(t => t.status === 'pending');
-  const sortedPending = [...pendingTasks].sort((a, b) => (b.priorityScore || 0) - (a.priorityScore || 0));
+  // Dynamic AI schedule generation helpers
+  const parseEstimatedTime = (timeStr) => {
+    if (!timeStr) return 45; // default 45 mins
+    const hourMatch = timeStr.match(/(\d+)\s*h/);
+    const minMatch = timeStr.match(/(\d+)\s*m/);
+    const hours = hourMatch ? parseInt(hourMatch[1]) : 0;
+    const mins = minMatch ? parseInt(minMatch[1]) : 0;
+    return (hours * 60) + mins || 45;
+  };
 
-  const timelineBlocks = [
-    { time: '09:00 AM', label: 'Deep Work Block', task: sortedPending[0] ? sortedPending[0].title : 'Routine Email & Inbox Zero', duration: '90m', priority: sortedPending[0] ? sortedPending[0].priorityLevel : 'Low' },
-    { time: '11:30 AM', label: 'Mid-Day Focus Sprint', task: sortedPending[1] ? sortedPending[1].title : 'Admin Tasks & Scheduling', duration: '60m', priority: sortedPending[1] ? sortedPending[1].priorityLevel : 'Low' },
-    { time: '02:00 PM', label: 'Execution & Collaboration', task: sortedPending[2] ? sortedPending[2].title : 'Team Synced Standup', duration: '90m', priority: sortedPending[2] ? sortedPending[2].priorityLevel : 'Low' },
-    { time: '04:30 PM', label: 'Daily Review & Wrap-up', task: sortedPending[3] ? sortedPending[3].title : 'Workspace Cleanup & Reflection', duration: '30m', priority: sortedPending[3] ? sortedPending[3].priorityLevel : 'Low' }
-  ];
+  const formatTime = (minutesFromStart) => {
+    const startHour = 9; // 09:00 AM
+    const totalMinutes = startHour * 60 + minutesFromStart;
+    const hour24 = Math.floor(totalMinutes / 60) % 24;
+    const mins = totalMinutes % 60;
+    const period = hour24 >= 12 ? 'PM' : 'AM';
+    const hour12 = hour24 % 12 || 12;
+    return `${String(hour12).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${period}`;
+  };
+
+  const generateAISchedule = () => {
+    if (pendingTasks.length === 0) return [];
+
+    const blocks = [];
+    let currentMinutes = 0;
+    
+    for (let i = 0; i < sortedPending.length; i++) {
+      const task = sortedPending[i];
+      const taskMinutes = parseEstimatedTime(task.estimatedTime);
+      
+      // Keep it achievable: limit to 7 hours of scheduled timeline
+      if (currentMinutes + taskMinutes > 420) {
+        break;
+      }
+      
+      // Insert a lunch break if we cross 12:30 PM (210 minutes from 09:00 AM)
+      if (currentMinutes >= 210 && !blocks.some(b => b.label === 'Lunch Break')) {
+        blocks.push({
+          time: formatTime(currentMinutes),
+          label: 'Lunch Break',
+          task: 'Recharge & Hydrate 🥗',
+          duration: '45m',
+          priority: 'None',
+          isBreak: true
+        });
+        currentMinutes += 45;
+      }
+
+      // If a task is very long, split it to keep it achievable
+      if (taskMinutes > 90) {
+        const parts = Math.ceil(taskMinutes / 90);
+        for (let p = 1; p <= parts; p++) {
+          const chunkDuration = p === parts ? (taskMinutes % 90 || 90) : 90;
+          
+          blocks.push({
+            time: formatTime(currentMinutes),
+            label: `Deep Work: ${task.title} (Part ${p}/${parts})`,
+            task: task.description || 'Focus on main objectives.',
+            duration: `${chunkDuration}m`,
+            priority: task.priorityLevel || 'Medium',
+            isBreak: false
+          });
+          currentMinutes += chunkDuration;
+
+          if (p < parts || i < sortedPending.length - 1) {
+            blocks.push({
+              time: formatTime(currentMinutes),
+              label: 'Rest & Stretch',
+              task: 'Step away from screen 🧘',
+              duration: '15m',
+              priority: 'None',
+              isBreak: true
+            });
+            currentMinutes += 15;
+          }
+        }
+      } else {
+        blocks.push({
+          time: formatTime(currentMinutes),
+          label: `Focus Session: ${task.title}`,
+          task: task.description || 'Focus on completing objectives.',
+          duration: `${taskMinutes}m`,
+          priority: task.priorityLevel || 'Medium',
+          isBreak: false
+        });
+        currentMinutes += taskMinutes;
+
+        if (i < sortedPending.length - 1) {
+          blocks.push({
+            time: formatTime(currentMinutes),
+            label: 'Short Break',
+            task: 'Hydrate & rest your eyes 💧',
+            duration: '10m',
+            priority: 'None',
+            isBreak: true
+          });
+          currentMinutes += 10;
+        }
+      }
+    }
+
+    // Daily wrap-up
+    blocks.push({
+      time: formatTime(currentMinutes),
+      label: 'Daily Review & Wrap-up',
+      task: 'Review achievements & plan tomorrow 📝',
+      duration: '15m',
+      priority: 'Low',
+      isBreak: true
+    });
+
+    return blocks;
+  };
+
+  const timelineBlocks = generateAISchedule();
 
   // Dynamic Coach Suggestions
   const coachSuggestions = [];
@@ -194,33 +299,60 @@ export default function Dashboard() {
           </div>
 
           {/* AI-Generated Schedule Timeline */}
-          <div className="glass-panel ai-schedule-timeline" style={{ marginBottom: '24px' }}>
-            <div className="timeline-container">
-              {timelineBlocks.map((block, idx) => (
-                <div className="timeline-block" key={idx}>
-                  <div className="timeline-time">
-                    <Clock size={14} style={{ marginRight: '6px' }} />
-                    <span>{block.time}</span>
-                  </div>
-                  <div className="timeline-connector">
-                    <div className="timeline-dot"></div>
-                    {idx < timelineBlocks.length - 1 && <div className="timeline-line"></div>}
-                  </div>
-                  <div className="timeline-content">
-                    <div className="timeline-header">
-                      <span className="timeline-label">{block.label}</span>
-                      <span className="timeline-duration">{block.duration}</span>
+          <div className="glass-panel ai-schedule-timeline" style={{ marginBottom: '24px', padding: timelineBlocks.length === 0 ? '40px 24px' : '24px' }}>
+            {timelineBlocks.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '16px' }}>
+                <div style={{ fontSize: '36px', marginBottom: '14px', filter: 'drop-shadow(0 4px 10px rgba(139, 92, 246, 0.4))' }}>✨</div>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Your day is clear!</h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', margin: '8px auto 0 auto', maxWidth: '340px', lineHeight: 1.6 }}>
+                  No pending tasks found. Use the NLP Commander in the Task Brain to add tasks and automatically construct your custom AI daily schedule.
+                </p>
+              </div>
+            ) : (
+              <div className="timeline-container">
+                {timelineBlocks.map((block, idx) => (
+                  <div 
+                    className={`timeline-block ${block.isBreak ? 'timeline-break' : ''}`} 
+                    key={idx}
+                    style={block.isBreak ? { opacity: 0.85 } : {}}
+                  >
+                    <div className="timeline-time">
+                      <Clock size={14} style={{ marginRight: '6px', color: block.isBreak ? 'var(--text-muted)' : 'var(--accent-purple)' }} />
+                      <span>{block.time}</span>
                     </div>
-                    <p className="timeline-task">{block.task}</p>
-                    {block.priority !== 'Low' && (
-                      <span className={`priority-tag-badge priority-${block.priority.toLowerCase()}`}>
-                        {block.priority}
-                      </span>
-                    )}
+                    <div className="timeline-connector">
+                      <div 
+                        className="timeline-dot" 
+                        style={block.isBreak ? { background: 'var(--text-muted)', width: '8px', height: '8px', boxShadow: 'none' } : {}}
+                      ></div>
+                      {idx < timelineBlocks.length - 1 && <div className="timeline-line"></div>}
+                    </div>
+                    <div 
+                      className="timeline-content" 
+                      style={block.isBreak ? { background: 'rgba(255, 255, 255, 0.015)', border: '1px dashed rgba(255,255,255,0.06)' } : {}}
+                    >
+                      <div className="timeline-header">
+                        <span 
+                          className="timeline-label" 
+                          style={block.isBreak ? { color: 'var(--text-secondary)', fontWeight: 500 } : {}}
+                        >
+                          {block.label}
+                        </span>
+                        <span className="timeline-duration" style={block.isBreak ? { background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)' } : {}}>
+                          {block.duration}
+                        </span>
+                      </div>
+                      <p className="timeline-task" style={block.isBreak ? { color: 'var(--text-muted)', fontStyle: 'italic' } : {}}>{block.task}</p>
+                      {!block.isBreak && block.priority !== 'Low' && block.priority !== 'None' && (
+                        <span className={`priority-tag-badge priority-${block.priority.toLowerCase()}`}>
+                          {block.priority}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* AI Coach Panel */}

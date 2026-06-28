@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
-  const { activePage, setActivePage, localMode, switchToCloudMode, tasks, clearAllData } = useApp();
+  const { activePage, setActivePage, localMode, switchToCloudMode, tasks } = useApp();
 
   const handleNavClick = (pageId) => {
     setActivePage(pageId);
@@ -183,31 +183,6 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
               ☁️ Enable Cloud Sync
             </button>
           )}
-          <button 
-            className="btn-clear-data" 
-            onClick={() => {
-              if (window.confirm("Are you sure you want to clear all tasks, habits, and goals? This cannot be undone.")) {
-                clearAllData();
-              }
-            }}
-            style={{ 
-              display: 'block', 
-              width: '100%', 
-              padding: '8px 12px', 
-              marginTop: '10px', 
-              background: 'rgba(244, 63, 94, 0.08)', 
-              border: '1px solid rgba(244, 63, 94, 0.2)', 
-              borderRadius: '8px', 
-              color: '#f43f5e', 
-              fontSize: '11px', 
-              fontWeight: 600, 
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              textAlign: 'center'
-            }}
-          >
-            🗑️ Clear All Data
-          </button>
         </div>
       </aside>
       {/* Mobile overlay */}
