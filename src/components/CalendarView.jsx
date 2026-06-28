@@ -91,23 +91,57 @@ export default function CalendarView({
     setTaskModalOpen(true);
   };
 
+  const handleOpenDetailedSchedulerDirect = () => {
+    const now = new Date();
+    const hrs = now.getHours().toString().padStart(2, '0');
+    const mins = now.getMinutes().toString().padStart(2, '0');
+    const formattedVal = `${selectedDateStr}T${hrs}:${mins}`;
+    
+    setPreFilledDate(formattedVal);
+    setTaskModalOpen(true);
+  };
+
   const cells = getCalendarCells();
 
   return (
     <section id="calendar-page" className="page-container active">
       {/* Monthly Calendar View (Full Width) */}
       <div className="glass-panel" style={{ padding: '24px', width: '100%' }}>
-        <div className="calendar-controls">
+        <div className="calendar-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="calendar-month-year" id="calendar-title" style={{ fontSize: '18px', fontWeight: '800' }}>
             {monthNames[month]} {year}
           </div>
-          <div className="calendar-nav-btns">
-            <button className="btn btn-secondary btn-icon" onClick={() => changeMonth(-1)}>
-              <ChevronLeft size={16} />
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button 
+              className="btn btn-accent" 
+              onClick={handleOpenDetailedSchedulerDirect}
+              style={{
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px', 
+                fontSize: '12px', 
+                padding: '6px 14px', 
+                height: '34px',
+                borderRadius: '8px',
+                background: 'var(--accent-purple)',
+                color: '#fff',
+                border: 'none',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 0 10px rgba(139, 92, 246, 0.35)'
+              }}
+            >
+              <Plus size={14} />
+              <span>Detailed Task</span>
             </button>
-            <button className="btn btn-secondary btn-icon" onClick={() => changeMonth(1)}>
-              <ChevronRight size={16} />
-            </button>
+            <div className="calendar-nav-btns">
+              <button className="btn btn-secondary btn-icon" onClick={() => changeMonth(-1)}>
+                <ChevronLeft size={16} />
+              </button>
+              <button className="btn btn-secondary btn-icon" onClick={() => changeMonth(1)}>
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
