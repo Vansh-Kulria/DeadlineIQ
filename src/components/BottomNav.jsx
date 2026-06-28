@@ -18,6 +18,7 @@ export default function BottomNav() {
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'focus', label: 'Focus', icon: Target },
     { id: 'habits', label: 'Habits', icon: Flame },
+    { id: 'agent', label: 'AI Agent', icon: Cpu },
   ];
 
   return (
