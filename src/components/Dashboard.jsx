@@ -109,6 +109,9 @@ export default function Dashboard() {
     }
   };
 
+  const pendingTasks = tasks.filter(t => t.status === 'pending');
+  const sortedPending = [...pendingTasks].sort((a, b) => (b.priorityScore || 0) - (a.priorityScore || 0));
+
   // Dynamic AI schedule generation helpers
   const parseEstimatedTime = (timeStr) => {
     if (!timeStr) return 45; // default 45 mins
