@@ -2968,6 +2968,184 @@ header {
 
 
 /* ════════════════════════════════════════════════════════════════════
+   GOOGLE-STYLE VOICE LISTENING OVERLAY
+   ════════════════════════════════════════════════════════════════════ */
+.voice-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(8, 7, 20, 0.92);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.voice-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.voice-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  position: relative;
+  padding: 40px;
+  max-width: 420px;
+  width: 100%;
+}
+
+/* Close button */
+.voice-overlay-close {
+  position: absolute;
+  top: -20px;
+  right: -10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.voice-overlay-close:hover {
+  background: rgba(244, 63, 94, 0.1);
+  color: var(--accent-rose);
+  border-color: var(--accent-rose);
+}
+
+/* Status text area */
+.voice-overlay-status {
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voice-status-text {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: -0.2px;
+}
+
+.voice-interim-text {
+  font-size: 22px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: -0.3px;
+  line-height: 1.4;
+}
+
+.voice-final-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+  line-height: 1.4;
+}
+
+/* Pulsing Mic Button */
+.voice-overlay-mic {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 30px rgba(139, 92, 246, 0.4);
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.voice-overlay-mic:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 40px rgba(139, 92, 246, 0.5);
+}
+
+.voice-overlay-mic:not(.listening) {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.voice-overlay-mic:not(.listening):hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Pulsing rings */
+.voice-mic-rings {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.voice-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  opacity: 0;
+  transform: scale(1);
+}
+
+.voice-overlay-mic.listening .voice-ring {
+  animation: voicePulse 2s ease-out infinite;
+}
+
+.voice-overlay-mic.listening .ring-1 {
+  animation-delay: 0s;
+}
+
+.voice-overlay-mic.listening .ring-2 {
+  animation-delay: 0.5s;
+}
+
+.voice-overlay-mic.listening .ring-3 {
+  animation-delay: 1s;
+}
+
+@keyframes voicePulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+    border-color: rgba(139, 92, 246, 0);
+  }
+}
+
+/* Hint text */
+.voice-overlay-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.5;
+  opacity: 0.7;
+}
+/* ════════════════════════════════════════════════════════════════════
    MOBILE BOTTOM NAVIGATION BAR
    ════════════════════════════════════════════════════════════════════ */
 .bottom-nav {
