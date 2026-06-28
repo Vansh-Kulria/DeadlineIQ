@@ -9,12 +9,14 @@ import {
   Clock, 
   Video, 
   CheckCircle, 
-  Circle 
+  Circle,
+  X
 } from 'lucide-react';
 
 export default function CalendarView({ setTaskModalOpen, setPreFilledDate }) {
   const { tasks, addTask, deleteTask, toggleTask } = useApp();
   const [calDate, setCalDate] = useState(new Date());
+  const [isLayerOpen, setIsLayerOpen] = useState(false);
 
   const getTodayStr = () => {
     const today = new Date();
@@ -78,6 +80,11 @@ export default function CalendarView({ setTaskModalOpen, setPreFilledDate }) {
     const nextDate = new Date(calDate);
     nextDate.setMonth(nextDate.getMonth() + direction);
     setCalDate(nextDate);
+  };
+
+  const handleDayClick = (dateStr) => {
+    setSelectedDateStr(dateStr);
+    setIsLayerOpen(true);
   };
 
   const handleDayDoubleClick = (dateStr) => {
@@ -148,205 +155,213 @@ export default function CalendarView({ setTaskModalOpen, setPreFilledDate }) {
 
   return (
     <section id="calendar-page" className="page-container active">
-      <div className="calendar-split-layout">
-        
-        {/* Left Side: Main Calendar Month Grid */}
-        <div className="glass-panel calendar-main-section" style={{ padding: '24px' }}>
-          <div className="calendar-controls">
-            <div className="calendar-month-year" id="calendar-title" style={{ fontSize: '18px', fontWeight: '800' }}>
-              {monthNames[month]} {year}
-            </div>
-            <div className="calendar-nav-btns">
-              <button className="btn btn-secondary btn-icon" onClick={() => changeMonth(-1)}>
-                <ChevronLeft size={16} />
-              </button>
-              <button className="btn btn-secondary btn-icon" onClick={() => changeMonth(1)}>
-                <ChevronRight size={16} />
-              </button>
-            </div>
+      {/* Monthly Calendar View (Full Width) */}
+      <div className="glass-panel" style={{ padding: '24px', width: '100%' }}>
+        <div className="calendar-controls">
+          <div className="calendar-month-year" id="calendar-title" style={{ fontSize: '18px', fontWeight: '800' }}>
+            {monthNames[month]} {year}
           </div>
-
-          <div className="calendar-grid">
-            <div className="calendar-day-header">Sun</div>
-            <div className="calendar-day-header">Mon</div>
-            <div className="calendar-day-header">Tue</div>
-            <div className="calendar-day-header">Wed</div>
-            <div className="calendar-day-header">Thu</div>
-            <div className="calendar-day-header">Fri</div>
-            <div className="calendar-day-header">Sat</div>
-          </div>
-
-          <div className="calendar-days-container" id="calendar-grid-cells" style={{ minHeight: '380px' }}>
-            {cells.map((cell, idx) => {
-              const y = cell.date.getFullYear();
-              const mStr = String(cell.date.getMonth() + 1).padStart(2, '0');
-              const dStr = String(cell.date.getDate()).padStart(2, '0');
-              const dateStr = `${y}-${mStr}-${dStr}`;
-
-              const dayTasks = tasks.filter(t => t.deadline && t.deadline.startsWith(dateStr));
-              const isSelected = dateStr === selectedDateStr;
-
-              return (
-                <div 
-                  key={idx}
-                  className={`calendar-day-cell ${cell.otherMonth ? 'other-month' : ''} ${cell.isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => setSelectedDateStr(dateStr)}
-                  onDoubleClick={() => handleDayDoubleClick(dateStr)}
-                  title="Double click to add a task"
-                >
-                  <div className="calendar-day-num-row">
-                    <span className="calendar-day-number">{cell.date.getDate()}</span>
-                    {dayTasks.length > 0 && (
-                      <span style={{ 
-                        width: '6px', 
-                        height: '6px', 
-                        borderRadius: '50%', 
-                        background: 'var(--accent-teal)',
-                        display: 'inline-block'
-                      }}></span>
-                    )}
-                  </div>
-                  <div className="calendar-cell-events">
-                    {dayTasks.map(t => {
-                      let pillClass = 'event-safe';
-                      if (t.status === 'completed') {
-                        pillClass = 'event-completed';
-                      } else {
-                        const diff = new Date(t.deadline) - new Date();
-                        const hours = diff / (1000 * 60 * 60);
-                        if (hours < 0 || hours < 6) {
-                          pillClass = 'event-critical';
-                        } else if (hours < 24) {
-                          pillClass = 'event-warning';
-                        }
-                      }
-
-                      const timeFormatted = t.deadline.includes('T') ? t.deadline.split('T')[1] : '';
-                      return (
-                        <div className={`calendar-event-pill ${pillClass}`} title={`${t.title} (${t.category})`} key={t.id}>
-                          {timeFormatted && `${timeFormatted} `}{t.title}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="calendar-nav-btns">
+            <button className="btn btn-secondary btn-icon" onClick={() => changeMonth(-1)}>
+              <ChevronLeft size={16} />
+            </button>
+            <button className="btn btn-secondary btn-icon" onClick={() => changeMonth(1)}>
+              <ChevronRight size={16} />
+            </button>
           </div>
         </div>
 
-        {/* Right Side: Agenda Details Panel */}
-        <div className="glass-panel calendar-agenda-section" style={{ padding: '24px' }}>
-          <div className="agenda-header">
-            <div className="agenda-title-row">
-              <span className="agenda-title">{formattedSelectedDate}</span>
-              {isSelectedToday && <span className="agenda-today-badge">Today</span>}
-            </div>
-            <button className="btn btn-secondary btn-icon" onClick={handleOpenModalForSelected} title="Open detailed task scheduler">
-              <Plus size={16} />
-            </button>
-          </div>
+        <div className="calendar-grid">
+          <div className="calendar-day-header">Sun</div>
+          <div className="calendar-day-header">Mon</div>
+          <div className="calendar-day-header">Tue</div>
+          <div className="calendar-day-header">Wed</div>
+          <div className="calendar-day-header">Thu</div>
+          <div className="calendar-day-header">Fri</div>
+          <div className="calendar-day-header">Sat</div>
+        </div>
 
-          <div className="agenda-list">
-            {sortedDayTasks.length === 0 ? (
-              <div className="agenda-empty-state">
-                <Calendar size={28} style={{ color: 'var(--text-muted)' }} />
-                <p>No meetings or work scheduled for this day.</p>
+        <div className="calendar-days-container" id="calendar-grid-cells" style={{ minHeight: '420px' }}>
+          {cells.map((cell, idx) => {
+            const y = cell.date.getFullYear();
+            const mStr = String(cell.date.getMonth() + 1).padStart(2, '0');
+            const dStr = String(cell.date.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${mStr}-${dStr}`;
+
+            const dayTasks = tasks.filter(t => t.deadline && t.deadline.startsWith(dateStr));
+            const isSelected = dateStr === selectedDateStr;
+
+            return (
+              <div 
+                key={idx}
+                className={`calendar-day-cell ${cell.otherMonth ? 'other-month' : ''} ${cell.isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
+                onClick={() => handleDayClick(dateStr)}
+                onDoubleClick={() => handleDayDoubleClick(dateStr)}
+                title="Click to view daily agenda | Double click to add a task"
+              >
+                <div className="calendar-day-num-row">
+                  <span className="calendar-day-number">{cell.date.getDate()}</span>
+                  {dayTasks.length > 0 && (
+                    <span style={{ 
+                      width: '6px', 
+                      height: '6px', 
+                      borderRadius: '50%', 
+                      background: 'var(--accent-teal)',
+                      display: 'inline-block'
+                    }}></span>
+                  )}
+                </div>
+                <div className="calendar-cell-events">
+                  {dayTasks.map(t => {
+                    let pillClass = 'event-safe';
+                    if (t.status === 'completed') {
+                      pillClass = 'event-completed';
+                    } else {
+                      const diff = new Date(t.deadline) - new Date();
+                      const hours = diff / (1000 * 60 * 60);
+                      if (hours < 0 || hours < 6) {
+                        pillClass = 'event-critical';
+                      } else if (hours < 24) {
+                        pillClass = 'event-warning';
+                      }
+                    }
+
+                    const timeFormatted = t.deadline.includes('T') ? t.deadline.split('T')[1] : '';
+                    return (
+                      <div className={`calendar-event-pill ${pillClass}`} title={`${t.title} (${t.category})`} key={t.id}>
+                        {timeFormatted && `${timeFormatted} `}{t.title}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            ) : (
-              sortedDayTasks.map(t => {
-                const isCompleted = t.status === 'completed';
-                const timePart = t.deadline.includes('T') ? t.deadline.split('T')[1] : '';
-                const isMeeting = t.title.toLowerCase().includes('meeting') || 
-                                  t.title.toLowerCase().includes('sync') || 
-                                  t.title.toLowerCase().includes('call');
+            );
+          })}
+        </div>
+      </div>
 
-                return (
-                  <div key={t.id} className={`agenda-item ${isCompleted ? 'completed' : ''}`}>
-                    <button className="agenda-check-btn" onClick={() => toggleTask(t.id)}>
-                      {isCompleted ? <CheckCircle size={17} className="completed-check" /> : <Circle size={17} />}
-                    </button>
-                    
-                    <div className="agenda-item-content">
-                      <div className="agenda-item-title-row">
-                        <span className="agenda-item-title">{t.title}</span>
-                        <button className="agenda-delete-btn" onClick={() => deleteTask(t.id)} title="Delete task">
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-
-                      <div className="agenda-item-meta">
-                        {timePart && (
-                          <span className="agenda-time">
-                            <Clock size={11} />
-                            {formatTimeStr(timePart)}
-                          </span>
-                        )}
-
-                        {isMeeting ? (
-                          <span className="agenda-badge meeting-badge">
-                            <Video size={10} style={{ marginRight: '3px' }} /> Meeting
-                          </span>
-                        ) : (
-                          <span className={`agenda-badge ${t.category}`}>
-                            {t.category}
-                          </span>
-                        )}
-
-                        {t.estimatedTime && (
-                          <span style={{ opacity: 0.7 }}>({t.estimatedTime})</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Quick Schedule Input */}
-          <form className="agenda-quick-add" onSubmit={handleQuickAdd}>
-            <span className="quick-add-title">⚡ Quick Schedule</span>
+      {/* Floating Layer Overlay Modal (All data and quick scheduling) */}
+      {isLayerOpen && (
+        <div className="calendar-modal-backdrop" onClick={() => setIsLayerOpen(false)}>
+          <div className="calendar-modal-container glass-panel" onClick={(e) => e.stopPropagation()} style={{ padding: '24px' }}>
             
-            <div className="quick-add-inputs">
-              <input 
-                type="text" 
-                className="quick-add-input" 
-                placeholder="Task title (e.g. Project Sync)"
-                value={quickTitle}
-                onChange={(e) => setQuickTitle(e.target.value)}
-                required
-              />
-              
-              <div className="quick-add-row">
-                <input 
-                  type="time" 
-                  className="quick-add-input quick-add-time"
-                  value={quickTime}
-                  onChange={(e) => setQuickTime(e.target.value)}
-                  required
-                />
-                
-                <select 
-                  className="quick-add-select"
-                  value={quickCategory}
-                  onChange={(e) => setQuickCategory(e.target.value)}
-                >
-                  <option value="work">💼 Work</option>
-                  <option value="study">📚 Study</option>
-                  <option value="finance">💵 Finance</option>
-                  <option value="personal">👤 Personal</option>
-                </select>
-                
-                <button type="submit" className="btn btn-primary btn-sm" style={{ padding: '0 12px', height: '33px', borderRadius: '8px' }}>
-                  Add
+            <div className="agenda-header" style={{ marginBottom: '16px' }}>
+              <div className="agenda-title-row">
+                <span className="agenda-title" style={{ fontSize: '16px', fontWeight: '800' }}>{formattedSelectedDate}</span>
+                {isSelectedToday && <span className="agenda-today-badge">Today</span>}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button className="btn btn-secondary btn-icon" onClick={handleOpenModalForSelected} title="Open detailed task scheduler">
+                  <Plus size={16} />
+                </button>
+                <button className="calendar-modal-close-btn" onClick={() => setIsLayerOpen(false)} title="Close Panel">
+                  <X size={16} />
                 </button>
               </div>
             </div>
-          </form>
-        </div>
 
-      </div>
+            <div className="agenda-list" style={{ flex: 1, overflowY: 'auto', marginBottom: '20px', minHeight: '150px', maxHeight: '350px' }}>
+              {sortedDayTasks.length === 0 ? (
+                <div className="agenda-empty-state">
+                  <Calendar size={28} style={{ color: 'var(--text-muted)' }} />
+                  <p>No meetings or work scheduled for this day.</p>
+                </div>
+              ) : (
+                sortedDayTasks.map(t => {
+                  const isCompleted = t.status === 'completed';
+                  const timePart = t.deadline.includes('T') ? t.deadline.split('T')[1] : '';
+                  const isMeeting = t.title.toLowerCase().includes('meeting') || 
+                                    t.title.toLowerCase().includes('sync') || 
+                                    t.title.toLowerCase().includes('call');
+
+                  return (
+                    <div key={t.id} className={`agenda-item ${isCompleted ? 'completed' : ''}`}>
+                      <button className="agenda-check-btn" onClick={() => toggleTask(t.id)}>
+                        {isCompleted ? <CheckCircle size={17} className="completed-check" /> : <Circle size={17} />}
+                      </button>
+                      
+                      <div className="agenda-item-content">
+                        <div className="agenda-item-title-row">
+                          <span className="agenda-item-title">{t.title}</span>
+                          <button className="agenda-delete-btn" onClick={() => deleteTask(t.id)} title="Delete task">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+
+                        <div className="agenda-item-meta">
+                          {timePart && (
+                            <span className="agenda-time">
+                              <Clock size={11} />
+                              {formatTimeStr(timePart)}
+                            </span>
+                          )}
+
+                          {isMeeting ? (
+                            <span className="agenda-badge meeting-badge">
+                              <Video size={10} style={{ marginRight: '3px' }} /> Meeting
+                            </span>
+                          ) : (
+                            <span className={`agenda-badge ${t.category}`}>
+                              {t.category}
+                            </span>
+                          )}
+
+                          {t.estimatedTime && (
+                            <span style={{ opacity: 0.7 }}>({t.estimatedTime})</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Quick Schedule Input inside the Modal Layer */}
+            <form className="agenda-quick-add" onSubmit={handleQuickAdd} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+              <span className="quick-add-title">⚡ Quick Schedule on this Day</span>
+              
+              <div className="quick-add-inputs">
+                <input 
+                  type="text" 
+                  className="quick-add-input" 
+                  placeholder="Task or Meeting title"
+                  value={quickTitle}
+                  onChange={(e) => setQuickTitle(e.target.value)}
+                  required
+                />
+                
+                <div className="quick-add-row" style={{ marginTop: '8px' }}>
+                  <input 
+                    type="time" 
+                    className="quick-add-input quick-add-time"
+                    value={quickTime}
+                    onChange={(e) => setQuickTime(e.target.value)}
+                    required
+                  />
+                  
+                  <select 
+                    className="quick-add-select"
+                    value={quickCategory}
+                    onChange={(e) => setQuickCategory(e.target.value)}
+                  >
+                    <option value="work">💼 Work</option>
+                    <option value="study">📚 Study</option>
+                    <option value="finance">💵 Finance</option>
+                    <option value="personal">👤 Personal</option>
+                  </select>
+                  
+                  <button type="submit" className="btn btn-primary btn-sm" style={{ padding: '0 12px', height: '33px', borderRadius: '8px' }}>
+                    Add
+                  </button>
+                </div>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
     </section>
   );
 }
